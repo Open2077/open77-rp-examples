@@ -1,0 +1,355 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>rp_inventory</title>
+<style>
+    /* the stash column is toggled with the hidden attribute; keep it above every display rule */
+    [hidden] { display: none !important; }
+  /* rp_inventory: the POCKETS panel. Transparent page, no external asset, no
+     library. Everything drawn here comes from the client script (state / close);
+     every button is an "intent" the server answers with a fresh state. Tokens
+     follow the in-game OPEN//77 design system (open77-ui.css). */
+  :root {
+    --bg: rgba(10, 18, 32, 0.94); --bg-raised: rgba(16, 27, 43, 0.96); --surface: #101b2b; --surface-2: #132032;
+    --line: rgba(174, 211, 224, 0.10); --line-strong: rgba(174, 211, 224, 0.19); --line-hud: rgba(174, 211, 224, 0.30);
+    --text: #f2f6f8; --dim: #8d99a8; --faint: rgba(141, 153, 168, 0.72); --ink: #071013;
+    --accent: #22d8e2; --accent-soft: rgba(34, 216, 226, 0.12); --accent-line: rgba(34, 216, 226, 0.45);
+    --danger: #ff5c5c; --danger-soft: rgba(255, 92, 92, 0.12); --danger-line: rgba(255, 92, 92, 0.45);
+    --ok: #4fe3a9; --warn: #f5c95c;
+    --mono: "IBM Plex Mono", "Cascadia Mono", "Consolas", ui-monospace, monospace;
+    --display: "Rajdhani", "Bahnschrift Condensed", "Bahnschrift SemiCondensed", "Arial Narrow", "Segoe UI", sans-serif;
+    --notch: 12px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: transparent; color: var(--text); font: 13px/1.4 var(--mono); user-select: none; }
+  #inv { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+  #inv.hidden { display: none; }
+  .scrim { position: absolute; inset: 0; background: rgba(3, 7, 13, 0.55); }
+  .panel {
+    position: relative; width: 960px; height: 620px; display: flex; flex-direction: column;
+    background: var(--bg); border: 1px solid var(--line-hud); border-top: 2px solid var(--accent);
+    clip-path: polygon(0 0, calc(100% - var(--notch)) 0, 100% var(--notch), 100% 100%, var(--notch) 100%, 0 calc(100% - var(--notch)));
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
+  }
+  .panel.with-stash { width: 1200px; }
+  .panel::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.022) 0 1px, transparent 1px 3px); }
+
+  /* header */
+  header { display: flex; align-items: center; gap: 20px; padding: 12px 18px 10px 18px; border-bottom: 1px solid var(--line-strong); background: rgba(0, 0, 0, 0.22); }
+  .eyebrow { font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--dim); }
+  header h1 { margin: 0; font: 700 26px/1 var(--display); letter-spacing: 0.02em; text-transform: uppercase; color: var(--accent); }
+  header .who { margin-left: auto; text-align: right; min-width: 0; }
+  header .who .name { font: 700 15px/1.2 var(--display); text-transform: uppercase; letter-spacing: 0.06em; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
+  header .who .pid { font-size: 10px; letter-spacing: 0.12em; color: var(--dim); }
+  .weight { width: 190px; }
+  .weight .num { display: flex; justify-content: space-between; align-items: baseline; font-size: 11px; letter-spacing: 0.06em; }
+  .weight .num b { font-size: 14px; color: var(--text); font-weight: 600; }
+  .weight .num span { color: var(--dim); }
+  .bar { position: relative; height: 5px; margin-top: 4px; background: rgba(255, 255, 255, 0.07); overflow: hidden;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 3px 100%, 0 calc(100% - 3px)); }
+  .bar .fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--accent); transition: width 160ms ease-out, background 160ms; }
+  .bar .fill.warn { background: var(--warn); } .bar .fill.full { background: var(--danger); }
+  header .close { width: 30px; height: 30px; border: 1px solid var(--line-hud); background: transparent; color: var(--text); cursor: pointer; font: 16px/1 var(--mono); }
+  header .close:hover { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent); }
+
+  /* body: columns */
+  main { flex: 1; display: flex; min-height: 0; }
+  .col { flex: 1; display: flex; flex-direction: column; min-width: 0; border-right: 1px solid var(--line-strong); }
+  .col .head { display: flex; align-items: baseline; gap: 12px; padding: 10px 16px 6px; }
+  .col .head h2 { margin: 0; font: 700 16px/1 var(--display); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text); }
+  .col .head .id { font-size: 10px; letter-spacing: 0.1em; color: var(--accent); }
+  .col .head .cap { margin-left: auto; font-size: 11px; color: var(--dim); }
+  .col .head .cap b { color: var(--text); font-weight: 600; }
+  .grid { flex: 1; overflow-y: auto; padding: 6px 16px 14px; display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); grid-auto-rows: 104px; gap: 8px; align-content: start; }
+  .grid::-webkit-scrollbar { width: 6px; } .grid::-webkit-scrollbar-thumb { background: var(--line-hud); }
+  .empty { grid-column: 1 / -1; color: var(--faint); font-size: 11px; letter-spacing: 0.06em; padding: 18px 4px; text-transform: uppercase; }
+
+  /* tiles */
+  .tile { position: relative; display: flex; flex-direction: column; padding: 8px 9px 7px; background: var(--surface); border: 1px solid var(--line-strong); cursor: pointer; text-align: left; color: var(--text); font: inherit; overflow: hidden; }
+  .tile:hover { background: var(--surface-2); border-color: var(--accent-line); }
+  .tile.selected { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent-line); }
+  .tile .top { display: flex; align-items: flex-start; justify-content: space-between; }
+  .tile svg { width: 22px; height: 22px; stroke: var(--accent); fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .tile .count { font-size: 12px; font-weight: 600; color: var(--text); letter-spacing: 0.04em; }
+  .tile .label { margin-top: auto; font: 600 12px/1.2 var(--mono); color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tile .kg { font-size: 10px; color: var(--dim); letter-spacing: 0.06em; margin-top: 2px; }
+  .tile .flag { position: absolute; right: -1px; bottom: -1px; font-size: 8px; letter-spacing: 0.16em; padding: 1px 5px; text-transform: uppercase; }
+  .tile.illegal { border-color: var(--danger-line); background: var(--danger-soft); }
+  .tile.illegal svg { stroke: var(--danger); }
+  .tile.illegal .flag { background: var(--danger); color: var(--ink); font-weight: 700; }
+  .tile.illegal:hover { border-color: var(--danger); }
+  .tile.illegal.selected { box-shadow: inset 0 0 0 1px var(--danger-line); border-color: var(--danger); }
+  .tile.usable .flag { color: var(--accent); border-top: 1px solid var(--accent-line); border-left: 1px solid var(--accent-line); }
+
+  /* detail column */
+  .detail { width: 280px; flex: none; display: flex; flex-direction: column; padding: 12px 16px; background: rgba(0, 0, 0, 0.18); overflow-y: auto; }
+  .detail .hint { color: var(--faint); font-size: 11px; letter-spacing: 0.06em; line-height: 1.6; margin-top: 8px; }
+  .detail .kicker { font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--dim); }
+  .detail .title { font: 700 22px/1.1 var(--display); text-transform: uppercase; letter-spacing: 0.03em; margin: 2px 0 8px; color: var(--text); }
+  .detail .title.illegal { color: var(--danger); }
+  .detail .glyph { float: right; width: 34px; height: 34px; stroke: var(--accent); fill: none; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; margin: 2px 0 0 8px; }
+  .detail .glyph.illegal { stroke: var(--danger); }
+  .kv { display: grid; grid-template-columns: 78px 1fr; gap: 3px 10px; font-size: 11px; margin-bottom: 10px; }
+  .kv span:nth-child(odd) { color: var(--dim); letter-spacing: 0.08em; text-transform: uppercase; font-size: 9px; padding-top: 2px; }
+  .kv span:nth-child(even) { color: var(--text); }
+  .kv .bad { color: var(--danger); }
+  .kv .good { color: var(--ok); }
+  .sep { border: 0; border-top: 1px solid var(--line-strong); margin: 6px 0 10px; }
+  .qty { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .qty label { font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); }
+  .qty input { width: 64px; background: var(--surface); border: 1px solid var(--line-hud); color: var(--text); padding: 5px 7px; font: 13px var(--mono); }
+  .qty input:focus { outline: none; border-color: var(--accent); }
+  .qty .stp { width: 26px; height: 26px; border: 1px solid var(--line-hud); background: transparent; color: var(--text); cursor: pointer; font: 13px var(--mono); }
+  .qty .stp:hover { border-color: var(--accent-line); color: var(--accent); }
+  .qty .max { font-size: 10px; color: var(--dim); }
+  .actions { display: flex; flex-direction: column; gap: 6px; }
+  .btn { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 10px; background: var(--accent-soft); border: 1px solid var(--accent-line); color: var(--text); cursor: pointer; font: 600 11px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; text-align: left; }
+  .btn small { font-size: 9px; letter-spacing: 0.06em; color: var(--dim); text-transform: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .btn:hover { background: var(--accent); color: var(--ink); } .btn:hover small { color: var(--ink); }
+  .btn.danger { border-color: var(--danger-line); background: var(--danger-soft); }
+  .btn.danger:hover { background: var(--danger); }
+  .btn:disabled, .btn:disabled:hover { background: transparent; border-color: var(--line-strong); color: var(--faint); cursor: default; }
+  .btn:disabled small { color: var(--faint); }
+  .btn.busy, .btn.busy:hover { background: var(--surface-2); border-color: var(--line-hud); color: var(--dim); cursor: wait; }
+
+  footer { display: flex; justify-content: space-between; padding: 5px 18px; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); border-top: 1px solid var(--line-strong); }
+  .toasts { position: absolute; right: 16px; bottom: 34px; display: flex; flex-direction: column; gap: 6px; pointer-events: none; }
+  .toast { background: rgba(3, 7, 13, 0.92); border-left: 3px solid var(--ok); padding: 7px 12px; max-width: 360px; font-size: 11px; letter-spacing: 0.04em; }
+  .toast.bad { border-left-color: var(--danger); }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="g-heal" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16"/><path d="M12 8v8M8 12h8"/></symbol>
+  <symbol id="g-food" viewBox="0 0 24 24"><path d="M3 12h18a9 9 0 0 1-18 0z"/><path d="M8 8l1-3M12 8V4M16 8l-1-3"/></symbol>
+  <symbol id="g-drink" viewBox="0 0 24 24"><path d="M9 3h6v3l2 3v10a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V9l2-3z"/><path d="M7 13h10"/></symbol>
+  <symbol id="g-fuel" viewBox="0 0 24 24"><rect x="5" y="7" width="12" height="14"/><path d="M8 7V4h5v3M17 11l2-2 2 2v6a2 2 0 0 1-2 2"/><path d="M8 11h6"/></symbol>
+  <symbol id="g-smoke" viewBox="0 0 24 24"><path d="M3 15h13v4H3zM16 15h4v4h-4"/><path d="M18 11c0-2-2-2-2-4M14 11c0-2-2-2-2-4"/></symbol>
+  <symbol id="g-drug" viewBox="0 0 24 24"><path d="M8.5 5.5l10 10a3.5 3.5 0 0 1-5 5l-10-10a3.5 3.5 0 0 1 5-5z"/><path d="M6 8l5 5"/></symbol>
+  <symbol id="g-stamina" viewBox="0 0 24 24"><path d="M13 3L5 13h6l-1 8 9-11h-6l0-7z"/></symbol>
+  <symbol id="g-tech" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10"/><path d="M10 7V4M14 7V4M10 20v-3M14 20v-3M7 10H4M7 14H4M20 10h-3M20 14h-3"/></symbol>
+  <symbol id="g-tool" viewBox="0 0 24 24"><path d="M14 4a5 5 0 0 0-4.6 7L3 17.4V21h3.6L13 14.6A5 5 0 1 0 14 4z"/><circle cx="15" cy="9" r="1.2"/></symbol>
+  <symbol id="g-material" viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/></symbol>
+  <symbol id="g-cargo" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="13"/><path d="M3 13h18M12 8v13M9 8l3-4 3 4"/></symbol>
+  <symbol id="g-misc" viewBox="0 0 24 24"><path d="M3 12V4h8l10 10-8 8L3 12z"/><circle cx="7.5" cy="8.5" r="1"/></symbol>
+</svg>
+
+<div id="inv" class="hidden">
+  <div class="scrim"></div>
+  <div class="panel" id="panel">
+    <header>
+      <div>
+        <div class="eyebrow">Night City // personal effects</div>
+        <h1>Pockets</h1>
+      </div>
+      <div class="weight">
+        <div class="num"><b id="wNum">0.0 / 40 kg</b><span id="wPct">0%</span></div>
+        <div class="bar"><div class="fill" id="wFill"></div></div>
+      </div>
+      <div class="who">
+        <div class="name" id="who">-</div>
+        <div class="pid" id="pid"></div>
+      </div>
+      <button class="close" id="btnClose" title="Close (Esc)">&times;</button>
+    </header>
+    <main>
+      <section class="col" id="colPockets">
+        <div class="head"><h2>Pockets</h2><span class="cap" id="capPockets"></span></div>
+        <div class="grid" id="gridPockets"></div>
+      </section>
+      <section class="col" id="colStash" hidden>
+        <div class="head"><h2>Stash</h2><span class="id" id="stashId"></span><span class="cap" id="capStash"></span></div>
+        <div class="grid" id="gridStash"></div>
+      </section>
+      <aside class="detail" id="detail"></aside>
+    </main>
+    <footer><span>Esc closes &middot; /use /drop /give still work</span><span id="footRight">server-authoritative</span></footer>
+    <div class="toasts" id="toasts"></div>
+  </div>
+</div>
+
+<script>
+  // window.Open77 is the page bridge: Open77.on(event, handler) receives what the
+  // client script sends with page:send(event, payload); Open77.emit(event, payload)
+  // raises an event the client script handles with page:on(). Nothing here talks to
+  // the network or decides anything: every action is an "intent" the server answers
+  // with a fresh "state".
+  const bridge = window.Open77;
+  const GLYPHS = ["heal", "food", "drink", "fuel", "smoke", "drug", "stamina", "tech", "tool", "material", "cargo", "misc"];
+  const S = { open: false, state: null, sel: null, busy: null };   // sel = { side: "pockets"|"stash", id }
+
+  const $ = (id) => document.getElementById(id);
+  const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const kg = (n) => (Math.round(Number(n || 0) * 10) / 10).toFixed(1);
+  const cap = (n) => String(Math.round(Number(n || 0)));
+  function emit(name, payload) { if (bridge && typeof bridge.emit === "function") bridge.emit(name, payload || {}); }
+  function intent(action, extra) { emit("intent", Object.assign({ action: action }, extra || {})); }
+
+  function toast(text, ok) {
+    if (!text) return;
+    const el = document.createElement("div"); el.className = "toast" + (ok ? "" : " bad"); el.textContent = text;
+    $("toasts").appendChild(el); setTimeout(() => el.remove(), 4000);
+  }
+
+  function glyph(cat, cls) {
+    const id = GLYPHS.indexOf(cat) >= 0 ? cat : "misc";
+    return `<svg class="${cls || ""}"><use href="#g-${id}"></use></svg>`;
+  }
+
+  // ---- open / close --------------------------------------------------------
+  function onState(st) {
+    if (!st || st.open === false) { onClose(); return; }
+    const first = !S.open;
+    S.open = true; S.state = st; S.busy = null;
+    if (first) S.sel = null;
+    $("inv").classList.remove("hidden");
+    render();
+    if (st.notice && st.notice.text) toast(st.notice.text, st.notice.ok !== false);
+  }
+  function onClose() { S.open = false; S.state = null; S.sel = null; S.busy = null; $("inv").classList.add("hidden"); }
+
+  // ---- rendering ---------------------------------------------------------------
+  function container(side) {
+    const st = S.state; if (!st) return null;
+    return side === "stash" ? st.stash : st.pockets;
+  }
+  function findEntry(side, id) {
+    const c = container(side); if (!c) return null;
+    return (c.entries || []).find((e) => e.id === id) || null;
+  }
+
+  function render() {
+    const st = S.state; if (!st) return;
+    const p = st.pockets || { entries: [], weight: 0, capacity: 40 };
+    const w = Number(p.weight || 0), c = Number(p.capacity || 40);
+    const pct = c > 0 ? Math.min(100, Math.round(w / c * 100)) : 0;
+    $("wNum").textContent = `${kg(w)} / ${cap(c)} kg`;
+    $("wPct").textContent = pct + "%";
+    const fill = $("wFill"); fill.style.width = pct + "%";
+    fill.className = "fill" + (pct >= 100 ? " full" : pct >= 80 ? " warn" : "");
+    $("who").textContent = st.name || "-";
+    $("pid").textContent = st.playerId != null ? "ID " + st.playerId : "";
+    $("capPockets").innerHTML = `<b>${kg(w)}</b> / ${cap(c)} kg`;
+    renderGrid("pockets", p);
+
+    const stash = st.stash;
+    $("panel").classList.toggle("with-stash", !!stash);
+    $("colStash").hidden = !stash;
+    if (stash) {
+      $("stashId").textContent = stash.id || "";
+      $("capStash").innerHTML = `<b>${kg(stash.weight)}</b> / ${cap(stash.capacity)} kg`;
+      renderGrid("stash", stash);
+    }
+    // A selection that no longer exists (used up, given away) is dropped.
+    if (S.sel && !findEntry(S.sel.side, S.sel.id)) S.sel = null;
+    if (S.sel && S.sel.side === "stash" && !stash) S.sel = null;
+    renderDetail();
+  }
+
+  function renderGrid(side, c) {
+    const grid = $(side === "stash" ? "gridStash" : "gridPockets");
+    const entries = c.entries || [];
+    if (!entries.length) {
+      grid.innerHTML = `<div class="empty">${side === "stash" ? "Empty stash." : "Empty. Not even lint."}</div>`;
+      return;
+    }
+    grid.innerHTML = entries.map((e) => {
+      const sel = S.sel && S.sel.side === side && S.sel.id === e.id;
+      const cls = "tile" + (e.illegal ? " illegal" : "") + (e.usable ? " usable" : "") + (sel ? " selected" : "");
+      const flag = e.illegal ? `<span class="flag">Illegal</span>` : (e.usable ? `<span class="flag">Use</span>` : "");
+      return `<button class="${cls}" data-side="${side}" data-id="${esc(e.id)}" title="${esc(e.label)}">
+        <div class="top">${glyph(e.category)}<span class="count">x${esc(e.count)}</span></div>
+        <div class="label">${esc(e.label)}</div>
+        <div class="kg">${kg(e.total)} kg</div>${flag}</button>`;
+    }).join("");
+    grid.querySelectorAll(".tile").forEach((b) => b.onclick = () => select(b.dataset.side, b.dataset.id));
+  }
+
+  function select(side, id) {
+    S.sel = { side: side, id: id };
+    S.busy = null;
+    render();
+    const inp = $("qty"); if (inp) { inp.focus(); inp.select(); }
+  }
+
+  function renderDetail() {
+    const d = $("detail");
+    const st = S.state;
+    if (!S.sel) {
+      d.innerHTML = `<div class="kicker">Nothing selected</div>
+        <div class="hint">Pick a tile to see what it is and what you can do with it.${st && st.stash ? "<br><br>Store moves it from your pockets into the stash; Take brings it back." : ""}</div>`;
+      return;
+    }
+    const e = findEntry(S.sel.side, S.sel.id);
+    if (!e) { S.sel = null; renderDetail(); return; }
+    const fromStash = S.sel.side === "stash";
+    const near = st.nearest;
+    const busy = S.busy;
+    const btn = (action, label, sub, cls, disabled) =>
+      `<button class="btn ${cls || ""}${busy === action ? " busy" : ""}" data-action="${action}" ${disabled || busy ? "disabled" : ""}>` +
+      `<span>${busy === action ? "Working..." : label}</span>${sub ? `<small>${sub}</small>` : ""}</button>`;
+    let h = `${glyph(e.category, "glyph" + (e.illegal ? " illegal" : ""))}
+      <div class="kicker">${esc(e.category || "item")}${fromStash ? " &middot; in the stash" : ""}</div>
+      <div class="title${e.illegal ? " illegal" : ""}">${esc(e.label)}</div>
+      <div class="kv">
+        <span>Count</span><span>x${esc(e.count)}</span>
+        <span>Unit</span><span>${kg(e.weight)} kg</span>
+        <span>Total</span><span>${kg(e.total)} kg</span>
+        <span>Status</span><span class="${e.illegal ? "bad" : ""}">${e.illegal ? "Illegal. NCPD would love to find this." : (e.usable ? "Usable." : "Legal.")}</span>
+      </div>
+      <hr class="sep">`;
+    const showQty = e.count > 1;
+    if (showQty) h += `<div class="qty"><label for="qty">How many</label>
+        <button class="stp" data-step="-1">-</button><input id="qty" type="number" min="1" max="${e.count}" value="1"><button class="stp" data-step="1">+</button>
+        <span class="max">of ${esc(e.count)}</span></div>`;
+    h += `<div class="actions">`;
+    if (fromStash) {
+      h += btn("take", "Take", "into your pockets");
+    } else {
+      if (e.usable) h += btn("use", "Use", "one unit, 3 s");
+      if (st.stash) h += btn("store", "Store", "into " + esc(st.stash.id || "the stash"));
+      h += near
+        ? btn("give", "Give", `to ${esc(near.name)} (${(Number(near.distance) || 0).toFixed(1)} m)`)
+        : btn("give", "Give", "nobody within 3 m", "", true);
+      h += btn("drop", "Drop", "on the ground, 30 min", "danger");
+    }
+    h += `</div>`;
+    d.innerHTML = h;
+    bindDetail(d, e, fromStash);
+  }
+
+  function qty(max) {
+    const inp = $("qty");
+    if (!inp) return 1;
+    let n = Math.floor(Number(inp.value) || 1);
+    if (n < 1) n = 1; if (n > max) n = max;
+    inp.value = n;
+    return n;
+  }
+
+  function bindDetail(root, e, fromStash) {
+    root.querySelectorAll(".stp").forEach((b) => b.onclick = () => {
+      const inp = $("qty"); if (!inp) return;
+      inp.value = String((Math.floor(Number(inp.value) || 1)) + Number(b.dataset.step));
+      qty(e.count);
+    });
+    const inp = $("qty");
+    if (inp) inp.onkeydown = (ev) => { if (ev.key === "Enter") { ev.preventDefault(); const first = root.querySelector(".btn:not(:disabled)"); if (first) first.click(); } };
+    root.querySelectorAll(".btn[data-action]").forEach((b) => b.onclick = () => {
+      const action = b.dataset.action;
+      const payload = { item: e.id };
+      if (action !== "use") payload.count = qty(e.count);
+      S.busy = action;           // one intent at a time; the next state clears it
+      renderDetail();
+      intent(action, payload);
+    });
+  }
+
+  // ---- wiring ----------------------------------------------------------------------
+  $("btnClose").onclick = () => emit("close");
+  document.addEventListener("keydown", (ev) => { if (ev.key === "Escape" && S.open) { ev.preventDefault(); emit("close"); } });
+  if (bridge && typeof bridge.on === "function") {
+    bridge.on("state", onState);
+    bridge.on("close", onClose);
+  }
+  emit("ready", {});
+</script>

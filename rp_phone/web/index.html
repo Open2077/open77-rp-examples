@@ -1,0 +1,453 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>rp_phone</title>
+<style>
+  :root {
+    --bg: #0b0d12;
+    --panel: #12151d;
+    --panel2: #181c26;
+    --line: #262b38;
+    --cyan: #22d8e2;
+    --yellow: #f2e63b;
+    --red: #ff3f5a;
+    --green: #5ef28b;
+    --text: #e8f1f4;
+    --muted: #8a95a8;
+    --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+    --mono: "Consolas", "Cascadia Mono", monospace;
+  }
+  html, body { margin: 0; background: transparent; color: var(--text); font: 13px/1.4 var(--font); }
+  body { overflow: hidden; }
+  * { box-sizing: border-box; }
+  #phone { position: fixed; right: 28px; bottom: 28px; width: 360px; height: 640px; display: none;
+    background: var(--bg); border: 1px solid var(--cyan); border-radius: 14px; overflow: hidden;
+    box-shadow: 0 0 0 4px #05070a, 0 0 28px rgba(34,216,226,.25); flex-direction: column; }
+  #phone.on { display: flex; }
+  #phone::before { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 5;
+    background: repeating-linear-gradient(0deg, rgba(255,255,255,.015) 0 1px, transparent 1px 3px); }
+  header { padding: 10px 12px 8px; background: var(--panel); border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 8px; }
+  header .brand { font: 700 11px var(--mono); letter-spacing: .18em; color: var(--cyan); }
+  header .num { font: 600 14px var(--mono); color: var(--yellow); }
+  header .name { color: var(--muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  header .grow { flex: 1; min-width: 0; }
+  header .x { border: 1px solid var(--line); background: var(--panel2); color: var(--muted); width: 26px; height: 26px;
+    border-radius: 6px; cursor: pointer; font: 700 12px var(--mono); }
+  header .x:hover { color: var(--red); border-color: var(--red); }
+  nav { display: grid; grid-template-columns: repeat(6, 1fr); background: var(--panel); border-bottom: 1px solid var(--line); }
+  nav button { position: relative; border: 0; background: transparent; color: var(--muted); padding: 8px 0 7px;
+    font: 600 10px var(--mono); letter-spacing: .04em; cursor: pointer; text-transform: uppercase; border-bottom: 2px solid transparent; }
+  nav button.on { color: var(--cyan); border-bottom-color: var(--cyan); }
+  nav button .badge { position: absolute; top: 3px; right: 6px; min-width: 15px; height: 15px; padding: 0 4px; border-radius: 8px;
+    background: var(--red); color: #fff; font: 700 10px var(--mono); line-height: 15px; }
+  main { flex: 1; min-height: 0; overflow: auto; padding: 10px 12px; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+  section { display: none; }
+  section.on { display: block; }
+  h2 { margin: 6px 0 8px; font: 700 11px var(--mono); letter-spacing: .14em; color: var(--muted); text-transform: uppercase; }
+  .row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+  .row .grow { flex: 1; min-width: 0; }
+  input, textarea { width: 100%; background: var(--panel2); border: 1px solid var(--line); color: var(--text); padding: 7px 8px;
+    border-radius: 6px; font: 13px var(--font); outline: none; }
+  input:focus, textarea:focus { border-color: var(--cyan); }
+  textarea { resize: none; height: 58px; }
+  button.btn { border: 1px solid var(--cyan); background: transparent; color: var(--cyan); padding: 6px 10px; border-radius: 6px;
+    font: 600 11px var(--mono); letter-spacing: .06em; cursor: pointer; text-transform: uppercase; white-space: nowrap; }
+  button.btn:hover { background: rgba(34,216,226,.12); }
+  button.btn.y { border-color: var(--yellow); color: var(--yellow); }
+  button.btn.y:hover { background: rgba(242,230,59,.12); }
+  button.btn.r { border-color: var(--red); color: var(--red); }
+  button.btn.r:hover { background: rgba(255,63,90,.12); }
+  button.btn.g { border-color: var(--green); color: var(--green); }
+  button.btn.g:hover { background: rgba(94,242,139,.12); }
+  button.btn.sm { padding: 4px 7px; font-size: 10px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin-bottom: 6px; }
+  .card.click { cursor: pointer; }
+  .card.click:hover { border-color: var(--cyan); }
+  .card .t { font-weight: 600; display: flex; justify-content: space-between; gap: 6px; }
+  .card .s { color: var(--muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card .mono { font: 12px var(--mono); color: var(--yellow); }
+  .card .acts { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
+  .pill { display: inline-block; min-width: 18px; padding: 0 5px; border-radius: 9px; background: var(--red); color: #fff;
+    font: 700 10px var(--mono); line-height: 18px; text-align: center; }
+  .online { color: var(--green); font: 700 9px var(--mono); letter-spacing: .1em; }
+  .empty { color: var(--muted); font-style: italic; padding: 10px 2px; }
+  .thread { display: flex; flex-direction: column; gap: 5px; padding: 4px 0 8px; }
+  .msg { max-width: 82%; padding: 6px 9px; border-radius: 10px; background: var(--panel2); border: 1px solid var(--line); word-break: break-word; }
+  .msg.mine { align-self: flex-end; background: rgba(34,216,226,.12); border-color: rgba(34,216,226,.4); }
+  .msg .at { display: block; font: 10px var(--mono); color: var(--muted); margin-top: 2px; }
+  .svc { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+  .svc button { border: 1px solid var(--line); background: var(--panel); color: var(--text); padding: 12px 8px; border-radius: 8px;
+    cursor: pointer; text-align: left; font: 600 12px var(--font); }
+  .svc button small { display: block; color: var(--muted); font-weight: 400; font-size: 10px; margin-top: 2px; }
+  .svc button:hover { border-color: var(--cyan); }
+  .svc button.ncpd { border-left: 3px solid #4f8bff; }
+  .svc button.trauma { border-left: 3px solid var(--red); }
+  .svc button.delamain { border-left: 3px solid var(--yellow); }
+  .svc button.mecano { border-left: 3px solid var(--green); }
+  #calloverlay { position: absolute; inset: 0; z-index: 8; display: none; flex-direction: column; align-items: center; justify-content: center;
+    background: rgba(8,10,15,.96); text-align: center; padding: 20px; }
+  #calloverlay.on { display: flex; }
+  #calloverlay .who { font: 700 20px var(--font); margin: 6px 0 2px; }
+  #calloverlay .n { font: 13px var(--mono); color: var(--yellow); }
+  #calloverlay .st { color: var(--muted); font: 11px var(--mono); letter-spacing: .12em; text-transform: uppercase; margin: 10px 0 18px; }
+  #calloverlay .st.ring { color: var(--cyan); animation: blink 1s infinite; }
+  @keyframes blink { 50% { opacity: .35; } }
+  #calloverlay .acts { display: flex; gap: 10px; }
+  #calloverlay .acts button { padding: 10px 16px; font-size: 12px; }
+  #calloverlay .text { width: 100%; margin-top: 18px; }
+  footer { padding: 5px 12px; background: var(--panel); border-top: 1px solid var(--line); color: var(--muted);
+    font: 10px var(--mono); display: flex; justify-content: space-between; }
+  .hint { color: var(--muted); font-size: 11px; margin: 2px 0 8px; }
+  .price { color: var(--yellow); font: 600 11px var(--mono); }
+  .ad .txt { margin: 4px 0; word-break: break-word; }
+  .mine-tag { color: var(--cyan); font: 700 9px var(--mono); letter-spacing: .1em; }
+</style>
+
+<div id="phone">
+  <header>
+    <div class="grow">
+      <div class="brand">HOLO//PHONE</div>
+      <div class="num" id="meNumber">no SIM</div>
+      <div class="name" id="meName"></div>
+    </div>
+    <button class="x" id="closeBtn" title="Close (Esc)">X</button>
+  </header>
+  <nav id="tabs">
+    <button data-tab="contacts">Contacts</button>
+    <button data-tab="messages">SMS<span class="badge" id="unreadBadge" style="display:none">0</span></button>
+    <button data-tab="calls">Calls</button>
+    <button data-tab="services">City</button>
+    <button data-tab="location">GPS</button>
+    <button data-tab="ads">Ads</button>
+  </nav>
+  <main>
+    <section id="tab-contacts">
+      <h2>Add a contact</h2>
+      <div class="row">
+        <input id="cNumber" placeholder="555-0042" maxlength="8" style="width:96px" class="">
+        <input id="cName" placeholder="Name" class="grow">
+        <button class="btn" id="cAdd">Add</button>
+      </div>
+      <div class="row">
+        <button class="btn sm" id="cNearby">Scan nearby</button>
+        <span class="hint" style="margin:0">players within 8 m</span>
+      </div>
+      <div id="nearby"></div>
+      <h2>Contacts</h2>
+      <div id="contacts"></div>
+    </section>
+
+    <section id="tab-messages">
+      <div id="threadList">
+        <h2>New message</h2>
+        <div class="row">
+          <input id="mNumber" placeholder="555-0042" maxlength="8" style="width:96px">
+          <input id="mText" placeholder="Message" class="grow">
+          <button class="btn" id="mSend">Send</button>
+        </div>
+        <h2>Threads</h2>
+        <div id="threads"></div>
+      </div>
+      <div id="threadView" style="display:none">
+        <div class="row">
+          <button class="btn sm" id="tBack">&lt; Back</button>
+          <div class="grow"><b id="tName"></b> <span class="mono" id="tPeer" style="font:12px var(--mono);color:var(--yellow)"></span></div>
+          <button class="btn sm y" id="tCall">Call</button>
+        </div>
+        <div class="thread" id="thread"></div>
+        <div class="row">
+          <input id="tText" placeholder="Reply..." class="grow">
+          <button class="btn" id="tSend">Send</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-calls">
+      <h2>Dial</h2>
+      <div class="row">
+        <input id="dNumber" placeholder="555-0042" class="grow" maxlength="8">
+        <button class="btn g" id="dCall">Call</button>
+      </div>
+      <div class="hint">The other side answers with /tel accepter, or on their phone.</div>
+      <h2>Recent</h2>
+      <div id="callLog"></div>
+    </section>
+
+    <section id="tab-services">
+      <h2>City services</h2>
+      <input id="sText" placeholder="What is going on? (sent with your position)" maxlength="200" style="margin-bottom:8px">
+      <div class="svc">
+        <button class="ncpd" data-svc="ncpd">NCPD<small>Dispatch gets your position</small></button>
+        <button class="trauma" data-svc="trauma">Trauma Team<small>911 - medics on duty are paged</small></button>
+        <button class="delamain" data-svc="delamain">Delamain<small>Book a cab (driver or automated)</small></button>
+        <button class="mecano" data-svc="mecano">Mechanic<small>Page the garage to your position</small></button>
+      </div>
+    </section>
+
+    <section id="tab-location">
+      <h2>Share my location</h2>
+      <div class="hint">The contact gets a pin on their map for two minutes.</div>
+      <div class="row">
+        <input id="lNumber" placeholder="555-0042" class="grow" maxlength="8">
+        <button class="btn" id="lSend">Send</button>
+      </div>
+      <h2>Contacts</h2>
+      <div id="locContacts"></div>
+    </section>
+
+    <section id="tab-ads">
+      <h2>Post an ad <span class="price" id="adPrice"></span></h2>
+      <textarea id="aText" placeholder="Selling a Quadra, low mileage, call 555-..." maxlength="140"></textarea>
+      <div class="row" style="margin-top:6px"><span class="hint grow" style="margin:0" id="adHint"></span><button class="btn y" id="aPost">Post</button></div>
+      <h2>City board</h2>
+      <div id="ads"></div>
+    </section>
+  </main>
+  <footer><span id="clock">--:--</span><span>ESC closes</span></footer>
+
+  <div id="calloverlay">
+    <div class="brand" style="font:700 11px var(--mono);letter-spacing:.18em;color:var(--cyan)">HOLO//CALL</div>
+    <div class="who" id="cvWho">-</div>
+    <div class="n" id="cvNumber"></div>
+    <div class="st" id="cvState">ringing</div>
+    <div class="acts" id="cvActs"></div>
+    <div class="text row" id="cvTextRow" style="display:none">
+      <input id="cvText" placeholder="Say something on the line..." class="grow" maxlength="200">
+      <button class="btn sm" id="cvSend">Send</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  // window.Open77 is the page bridge: Open77.on(event, handler) receives what the
+  // client script sends with page:send(event, payload); Open77.emit(event, payload)
+  // raises an event the client script handles with page:on(). Nothing here decides
+  // anything: every button is an intent the server validates.
+  const bridge = window.Open77;
+  const $ = (id) => document.getElementById(id);
+  const phone = $("phone");
+  let state = null;
+  let config = { adPrice: 50, adMinutes: 60, smsMax: 200, adMax: 140, nameMax: 24 };
+  let tab = "contacts";
+  let openPeer = null;
+  let visible = false;
+
+  function emit(name, payload) {
+    if (bridge && typeof bridge.emit === "function") bridge.emit(name, payload || {});
+  }
+  function intent(kind, payload) { emit("intent", { kind: kind, payload: payload || {} }); }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+  function fmtTime(unix) {
+    if (!unix) return "";
+    const d = new Date(unix * 1000);
+    const pad = (n) => (n < 10 ? "0" : "") + n;
+    return pad(d.getHours()) + ":" + pad(d.getMinutes());
+  }
+  function fmtDur(s) {
+    s = Math.max(0, s | 0);
+    const m = Math.floor(s / 60), r = s % 60;
+    return (m < 10 ? "0" : "") + m + ":" + (r < 10 ? "0" : "") + r;
+  }
+
+  // ---- tabs
+  function showTab(name) {
+    tab = name;
+    document.querySelectorAll("nav button").forEach((b) => b.classList.toggle("on", b.dataset.tab === name));
+    document.querySelectorAll("main section").forEach((s) => s.classList.toggle("on", s.id === "tab-" + name));
+    if (name === "contacts") intent("contacts.nearby");
+  }
+  document.querySelectorAll("nav button").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
+
+  // ---- renderers
+  function renderHeader() {
+    const me = state.me || {};
+    $("meNumber").textContent = me.sim ? me.number : "no SIM";
+    $("meName").textContent = me.name || "";
+    const badge = $("unreadBadge");
+    if (state.unread > 0) { badge.textContent = state.unread; badge.style.display = ""; } else badge.style.display = "none";
+    $("clock").textContent = fmtTime(state.t);
+  }
+
+  function contactCard(c) {
+    return '<div class="card"><div class="t"><span>' + esc(c.name) + '</span><span class="mono">' + esc(c.number) + '</span></div>' +
+      '<div class="acts">' +
+      '<button class="btn sm g" data-act="call" data-n="' + esc(c.number) + '">Call</button>' +
+      '<button class="btn sm" data-act="sms" data-n="' + esc(c.number) + '">SMS</button>' +
+      '<button class="btn sm y" data-act="loc" data-n="' + esc(c.number) + '">Share GPS</button>' +
+      '<button class="btn sm r" data-act="del" data-n="' + esc(c.number) + '">Remove</button>' +
+      '</div></div>';
+  }
+
+  function renderContacts() {
+    const list = state.contacts || [];
+    $("contacts").innerHTML = list.length ? list.map(contactCard).join("") : '<div class="empty">No contacts yet. Add a number or scan nearby.</div>';
+    $("locContacts").innerHTML = list.length
+      ? list.map((c) => '<div class="card click" data-act="loc" data-n="' + esc(c.number) + '"><div class="t"><span>' + esc(c.name) + '</span><span class="mono">' + esc(c.number) + '</span></div><div class="s">Send my position to this contact</div></div>').join("")
+      : '<div class="empty">Add contacts first.</div>';
+    if (state.nearby) {
+      const near = state.nearby;
+      $("nearby").innerHTML = near.length
+        ? near.map((p) => '<div class="card"><div class="t"><span>' + esc(p.name) + ' <span class="online">' + p.distance + ' m</span></span><span class="mono">' + esc(p.number) + '</span></div>' +
+          '<div class="acts"><button class="btn sm" data-act="addnear" data-n="' + esc(p.number) + '" data-name="' + esc(p.name) + '">Add contact</button></div></div>').join("")
+        : '<div class="empty">Nobody with a phone within 8 m.</div>';
+    }
+  }
+
+  function renderMessages() {
+    const threads = state.threads || [];
+    $("threads").innerHTML = threads.length
+      ? threads.map((t) => '<div class="card click" data-act="open" data-n="' + esc(t.peer) + '"><div class="t"><span>' + esc(t.name) +
+        (t.unread ? ' <span class="pill">' + t.unread + '</span>' : '') + '</span><span class="mono">' + esc(t.peer) + '</span></div>' +
+        '<div class="s">' + esc(t.last) + '</div></div>').join("")
+      : '<div class="empty">No messages. Night City is quiet.</div>';
+    const view = state.thread;
+    if (openPeer && view && view.peer === openPeer) {
+      $("threadList").style.display = "none";
+      $("threadView").style.display = "";
+      $("tName").textContent = view.name || view.peer;
+      $("tPeer").textContent = view.peer;
+      const box = $("thread");
+      box.innerHTML = (view.messages || []).map((m) => '<div class="msg' + (m.mine ? " mine" : "") + '">' + esc(m.text) + '<span class="at">' + fmtTime(m.at) + '</span></div>').join("") || '<div class="empty">Start the conversation.</div>';
+      box.scrollTop = box.scrollHeight;
+      document.querySelector("main").scrollTop = 1e6;
+    } else {
+      $("threadList").style.display = "";
+      $("threadView").style.display = "none";
+    }
+  }
+
+  function renderCalls() {
+    const log = state.callLog || [];
+    const label = { missed: "Missed", declined: "Declined", cancelled: "Cancelled", ended: "Ended", dropped: "Dropped", resource_stop: "Cut" };
+    $("callLog").innerHTML = log.length
+      ? log.map((e) => '<div class="card click" data-act="dial" data-n="' + esc(e.peer) + '"><div class="t"><span>' + (e.direction === "in" ? "&#8600; " : "&#8599; ") + esc(e.name || e.peer) +
+        '</span><span class="mono">' + esc(e.peer) + '</span></div><div class="s">' + (label[e.kind] || esc(e.kind)) + (e.seconds ? " - " + fmtDur(e.seconds) : "") + " - " + fmtTime(e.at) + '</div></div>').join("")
+      : '<div class="empty">No calls yet.</div>';
+  }
+
+  function renderAds() {
+    $("adPrice").textContent = (state.adPrice != null ? state.adPrice : config.adPrice) + " €$ / " + config.adMinutes + " min";
+    const list = state.ads || [];
+    $("ads").innerHTML = list.length
+      ? list.map((a) => '<div class="card ad"><div class="t"><span>' + esc(a.author) + (a.mine ? ' <span class="mine-tag">YOURS</span>' : '') + '</span><span class="mono">' + esc(a.number) + '</span></div>' +
+        '<div class="txt">' + esc(a.text) + '</div><div class="s">' + a.minutesLeft + ' min left</div>' +
+        '<div class="acts"><button class="btn sm g" data-act="call" data-n="' + esc(a.number) + '">Call</button><button class="btn sm" data-act="sms" data-n="' + esc(a.number) + '">SMS</button>' +
+        (a.mine ? '<button class="btn sm r" data-act="adremove" data-id="' + a.id + '">Remove</button>' : '') + '</div></div>').join("")
+      : '<div class="empty">The board is empty. Yours could be first.</div>';
+  }
+
+  function renderCall() {
+    const ov = $("calloverlay");
+    const call = state.call;
+    if (!call) { ov.classList.remove("on"); return; }
+    ov.classList.add("on");
+    $("cvWho").textContent = call.name || call.peer;
+    $("cvNumber").textContent = call.peer;
+    const st = $("cvState");
+    const acts = $("cvActs");
+    if (call.state === "ringing") {
+      st.className = "st ring";
+      if (call.direction === "in") {
+        st.textContent = "incoming call";
+        acts.innerHTML = '<button class="btn g" data-act="accept">Accept</button><button class="btn r" data-act="decline">Decline</button>';
+      } else {
+        st.textContent = "calling...";
+        acts.innerHTML = '<button class="btn r" data-act="hangup">Hang up</button>';
+      }
+      $("cvTextRow").style.display = "none";
+    } else {
+      st.className = "st";
+      st.textContent = (call.voice ? "voice line - " : "text line - ") + fmtDur(call.since);
+      acts.innerHTML = '<button class="btn r" data-act="hangup">Hang up</button>';
+      $("cvTextRow").style.display = "";
+    }
+  }
+
+  function render() {
+    if (!state) return;
+    renderHeader();
+    renderContacts();
+    renderMessages();
+    renderCalls();
+    renderAds();
+    renderCall();
+  }
+
+  // ---- actions (event delegation)
+  phone.addEventListener("click", (ev) => {
+    const el = ev.target.closest("[data-act]");
+    if (!el) return;
+    const n = el.dataset.n;
+    switch (el.dataset.act) {
+      case "call": intent("call.start", { number: n }); break;
+      case "dial": $("dNumber").value = n; showTab("calls"); break;
+      case "sms": openPeer = n; intent("sms.open", { peer: n }); showTab("messages"); break;
+      case "loc": intent("location.send", { number: n }); break;
+      case "del": intent("contacts.remove", { number: n }); break;
+      case "addnear": intent("contacts.add", { number: n, name: el.dataset.name || "" }); break;
+      case "open": openPeer = n; intent("sms.open", { peer: n }); break;
+      case "accept": intent("call.accept"); break;
+      case "decline": intent("call.decline"); break;
+      case "hangup": intent("call.hangup"); break;
+      case "adremove": intent("ads.remove", { id: Number(el.dataset.id) }); break;
+    }
+  });
+  document.querySelectorAll(".svc button").forEach((b) => b.addEventListener("click", () => {
+    intent("service", { name: b.dataset.svc, text: $("sText").value });
+    $("sText").value = "";
+  }));
+  $("cAdd").addEventListener("click", () => {
+    intent("contacts.add", { number: $("cNumber").value, name: $("cName").value });
+    $("cNumber").value = ""; $("cName").value = "";
+  });
+  $("cNearby").addEventListener("click", () => intent("contacts.nearby"));
+  $("mSend").addEventListener("click", () => {
+    intent("sms.send", { to: $("mNumber").value, text: $("mText").value });
+    $("mText").value = "";
+  });
+  $("tSend").addEventListener("click", () => {
+    if (!openPeer) return;
+    intent("sms.send", { to: openPeer, text: $("tText").value });
+    $("tText").value = "";
+  });
+  $("tText").addEventListener("keydown", (e) => { if (e.key === "Enter") $("tSend").click(); });
+  $("mText").addEventListener("keydown", (e) => { if (e.key === "Enter") $("mSend").click(); });
+  $("tBack").addEventListener("click", () => { openPeer = null; intent("sms.open", { peer: null }); render(); });
+  $("tCall").addEventListener("click", () => { if (openPeer) intent("call.start", { number: openPeer }); });
+  $("dCall").addEventListener("click", () => intent("call.start", { number: $("dNumber").value }));
+  $("dNumber").addEventListener("keydown", (e) => { if (e.key === "Enter") $("dCall").click(); });
+  $("lSend").addEventListener("click", () => intent("location.send", { number: $("lNumber").value }));
+  $("aPost").addEventListener("click", () => { intent("ads.post", { text: $("aText").value }); $("aText").value = ""; });
+  $("cvSend").addEventListener("click", () => { intent("call.text", { text: $("cvText").value }); $("cvText").value = ""; });
+  $("cvText").addEventListener("keydown", (e) => { if (e.key === "Enter") $("cvSend").click(); });
+  $("closeBtn").addEventListener("click", () => emit("close"));
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && visible) { e.preventDefault(); emit("close"); }
+  });
+
+  // ---- bridge
+  function onState(s) { state = s; render(); }
+  function onOpen() { visible = true; phone.classList.add("on"); showTab(tab); render(); }
+  function onClose() { visible = false; phone.classList.remove("on"); openPeer = null; $("nearby").innerHTML = ""; }
+  function onConfig(c) {
+    config = Object.assign(config, c || {});
+    $("aText").maxLength = config.adMax;
+    $("adHint").textContent = "max " + config.adMax + " chars, " + config.adMinutes + " min on the board";
+  }
+  const handlers = { state: onState, open: onOpen, close: onClose, config: onConfig };
+  if (bridge && typeof bridge.on === "function") {
+    Object.keys(handlers).forEach((k) => bridge.on(k, handlers[k]));
+  }
+  window.addEventListener("message", (event) => {
+    const data = event.data || {};
+    const name = data.event || data.name;
+    if (handlers[name]) handlers[name](data.payload || data);
+  });
+  showTab("contacts");
+  $("adHint").textContent = "max " + config.adMax + " chars, " + config.adMinutes + " min on the board";
+  emit("ready", {});
+})();
+</script>

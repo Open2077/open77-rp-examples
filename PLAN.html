@@ -1,0 +1,379 @@
+<title>Night City RP Build Plan</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --paper:#f4f5f2;--card:#ffffff;--ink:#1b1d22;--muted:#5d636d;--rule:#d9dcd6;
+  --accent:#0d7480;--accent-ink:#0b5f69;--accent-soft:#dff2f2;
+  --done:#2f7d4f;--done-soft:#e1f2e6;--wip:#8a6d1f;--wip-soft:#f6ecd0;--todo:#6b7280;--todo-soft:#e9ebee;--warn:#9a3d2e;--warn-soft:#f7e3de;
+  --code:#eef0ec;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#15171b;--card:#1d2026;--ink:#e8e9e6;--muted:#a1a7b0;--rule:#33373f;
+  --accent:#3fb6c0;--accent-ink:#7fd3da;--accent-soft:#12343a;
+  --done:#6fcf97;--done-soft:#173a26;--wip:#e0b95a;--wip-soft:#3b3115;--todo:#9aa0a8;--todo-soft:#2a2e35;--warn:#f08a75;--warn-soft:#3d1f1a;
+  --code:#23262d;
+}}
+:root[data-theme="dark"]{
+  --paper:#15171b;--card:#1d2026;--ink:#e8e9e6;--muted:#a1a7b0;--rule:#33373f;
+  --accent:#3fb6c0;--accent-ink:#7fd3da;--accent-soft:#12343a;
+  --done:#6fcf97;--done-soft:#173a26;--wip:#e0b95a;--wip-soft:#3b3115;--todo:#9aa0a8;--todo-soft:#2a2e35;--warn:#f08a75;--warn-soft:#3d1f1a;
+  --code:#23262d;
+}
+body{background:var(--paper);color:var(--ink);font-family:"IBM Plex Sans",system-ui,Segoe UI,Roboto,sans-serif;font-size:15px;line-height:1.55;margin:0;padding-inline:20px;padding-block:32px 64px}
+main{max-width:78ch;margin:0 auto}
+h1,h2,h3{font-family:"IBM Plex Sans Condensed","IBM Plex Sans",system-ui,sans-serif;text-wrap:balance;line-height:1.15}
+h1{font-size:2.4rem;font-weight:700;margin:0 0 .35rem}
+h2{font-size:1.45rem;font-weight:700;margin:2.6rem 0 .6rem;padding-top:1rem;border-top:2px solid var(--ink)}
+h3{font-size:1.05rem;font-weight:600;margin:1.4rem 0 .3rem}
+.lede{color:var(--muted);font-size:1.02rem;max-width:66ch;margin:0 0 1.2rem}
+.eyebrow{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-ink)}
+code,kbd{font-family:"IBM Plex Mono",ui-monospace,Consolas,monospace;font-size:.86em;background:var(--code);padding:.08em .35em;border-radius:3px}
+table{border-collapse:collapse;width:100%;font-size:.88rem;font-variant-numeric:tabular-nums}
+th,td{text-align:left;vertical-align:top;padding:.42rem .55rem;border-bottom:1px solid var(--rule)}
+th{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.tablewrap{overflow-x:auto}
+.pill{display:inline-block;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.7rem;letter-spacing:.05em;padding:.12em .5em;border-radius:999px;white-space:nowrap}
+.done{background:var(--done-soft);color:var(--done)}.wip{background:var(--wip-soft);color:var(--wip)}.todo{background:var(--todo-soft);color:var(--todo)}.warnp{background:var(--warn-soft);color:var(--warn)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:1.2rem 0}
+.stat{background:var(--card);border:1px solid var(--rule);border-radius:8px;padding:.7rem .9rem}
+.stat b{display:block;font-family:"IBM Plex Sans Condensed",sans-serif;font-size:1.7rem;line-height:1.1}
+.stat span{color:var(--muted);font-size:.82rem}
+.script{background:var(--card);border:1px solid var(--rule);border-radius:8px;padding:.9rem 1.1rem;margin:.8rem 0}
+.script header{display:flex;flex-wrap:wrap;gap:.5rem .8rem;align-items:baseline;margin-bottom:.35rem}
+.script header h3{margin:0}
+.script .meta{color:var(--muted);font-size:.85rem}
+.script dl{display:grid;grid-template-columns:max-content 1fr;gap:.25rem .9rem;margin:.5rem 0 0;font-size:.9rem}
+.script dt{color:var(--muted);font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;padding-top:.15em}
+.script dd{margin:0}
+.goal{margin-top:.6rem;font-size:.82rem}
+.goal code{display:block;white-space:pre-wrap;padding:.5rem .7rem;border-left:3px solid var(--accent)}
+.note{border-left:3px solid var(--accent);background:var(--accent-soft);padding:.6rem .9rem;border-radius:0 6px 6px 0;margin:1rem 0;font-size:.92rem}
+.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+ol.order li{margin:.25rem 0}
+@media (max-width:520px){.script dl{grid-template-columns:1fr}h1{font-size:1.9rem}}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<main>
+<p class="eyebrow">Open77 · serveur roleplay Night City · plan de construction v2</p>
+<h1>Night City RP Build Plan</h1>
+<p class="lede">Trente ressources Lua pour transformer le freeroam en serveur RP cyberpunk complet — eddies, NCPD, Trauma Team, ripperdocs, nomades des Badlands, fixers et netrunners. Le plan part de l'inventaire réel des <b>45 ressources déjà livrées avec le serveur</b> (rien de ce qui existe n'est réécrit), et chaque fiche donne ses commandes, les briques exactes qu'elle branche, ses dépendances, sa persistance, son scénario de test et la ligne <code>/goal</code> qui la lance.</p>
+
+<div class="grid">
+  <div class="stat"><b>45</b><span>ressources plateforme réutilisées</span></div>
+  <div class="stat"><b>37</b><span>livrées et jouées (phases 0–5)</span></div>
+  <div class="stat"><b>0</b><span>à construire — restent les parcours à deux joueurs</span></div>
+  <div class="stat"><b>12</b><span>métiers, dont 5 avec runs scriptés</span></div>
+</div>
+
+<div class="note"><b>Méthode, identique pour chaque fiche.</b> Un subagent n'a que le MCP (<code>@open2077/mcp</code>, build op77.76+) et le contrat commun <code>evals/rp-round/PROMPT-COMMON.md</code> ; il lit la carte de chaque native, valide, casse volontairement sa ressource pour vérifier que le validateur voit, livre. Je déploie sur le serveur d'eval (<code>127.0.0.1:11798</code>), compile avec le Lua du serveur, exerce chaque commande depuis la console, puis on joue le scénario de test ensemble (un client agent quand il faut un second joueur). Ce qui est faux dans les cartes remonte dans base et régénère l'index. Textes joueur en anglais, ton cyberpunk (eddies, choom, ripper, chooh2…) ; le plan et les README de test restent en français. <b>Le 18 septembre au soir, tout le serveur a quitté le plateau d'eval des Badlands pour le vrai Night City</b> : spawn à Kabuki Market Centre (<code>-1191.30, 2006.88, 7.82</code>, Watson), chaque POI sur un lieu réel mesuré et habillé de vrais props, cinq vrais appartements avec leur porte — la carte complète est dans le <code>README.md</code> du dossier.</div>
+
+<div class="note warn"><b>Limite plateforme mesurée le 18 septembre (9 essais, <code>rp_taxitest</code>).</b> L'IA de conduite (<code>Open77.vehicles.ai.driveTo</code>) ne roule que vers un point de route qu'elle peut atteindre dans le monde streamé autour du simulateur : le trajet validé de 20 m arrive en 5 s, un waypoint à 1 km, un point hors route ou <code>joinTraffic</code> laissent la tâche « running » sans bouger, sans événement. Aucune native ne colle un point sur la route. Conséquence pour le plan : les trajets IA longs (taxi Delamain PNJ, convois) restent un sujet <b>base</b> (snapping route + pathing longue distance) ; les métiers ci-dessous sont conçus pour des <b>joueurs qui conduisent</b>, les PNJ IA servent aux courtes distances, aux figurants et aux gardes.</div>
+
+<h2>Ce qui existe déjà et où chaque brique sert</h2>
+<p class="lede">Inventaire fait sur les ressources chargées par le serveur (<code>system/*</code>, <code>gamemodes/freeroam</code>, <code>polyzone</code>) : commandes et exports réels, pas les guides.</p>
+<div class="tablewrap"><table>
+<tr><th>Ressource</th><th>Ce qu'elle fournit</th><th>Réutilisée par</th></tr>
+<tr><td><code>freeroam</code></td><td><code>/car /dv /goto /tpc /spawn /suicide /revive /players</code>, menu, respawn auto, propriété des véhicules spawnés, races, deathmatch, <code>/anim</code></td><td>base du serveur ; <code>/car</code> et <code>/revive</code> deviennent admin-only en RP (rp_admin), le respawn auto est désactivé par Trauma Team</td></tr>
+<tr><td><code>open77_rp_basics</code></td><td>exports <code>cuff escort search carry held release state</code>, commandes <code>rp.held rp.free</code></td><td>NCPD, gangs, fixers (enlèvements)</td></tr>
+<tr><td><code>open77_contextmenu</code> + <code>open77_player_interactions</code></td><td>ciblage ALT+clic d'un joueur/objet avec actions enregistrables ; accept/decline entre joueurs</td><td>toutes les interactions joueur↔joueur : donner, fouiller, menotter, soigner, payer, montrer sa carte</td></tr>
+<tr><td><code>open77_interactions</code>, <code>open77_worldui</code>, <code>open77_markers</code>, <code>open77_groundcircle</code>, <code>open77_blips</code></td><td>prompts sur points du monde, POI carte, marqueurs 3D, cercles au sol, waypoints</td><td>boutiques, points de collecte, missions, garages, distributeurs</td></tr>
+<tr><td><code>polyzone</code>, <code>open77_zones</code></td><td>zones polygone/boîte/sphère, événements entrée/sortie</td><td>safe zones, Badlands, territoires de gang, prison, zones de collecte</td></tr>
+<tr><td><code>open77_doors</code>, <code>open77_forcedoor</code>, <code>open77_elevators</code>, <code>open77_devices</code></td><td>portes du monde (verrou, accès), ascenseurs, appareils vanilla activables</td><td>appartements, commissariat, cellules, entrepôts</td></tr>
+<tr><td><code>open77_props</code>, <code>open77_loot</code>, <code>open77_helditems</code></td><td>props persistants, objets au sol ramassables (<code>requestPickup</code>), objet en main</td><td>inventaire (drop/ramasser), runs de collecte (caisses, ferraille), chargements</td></tr>
+<tr><td><code>open77_vehicles</code>, <code>open77_fuel</code>, <code>vehicle-paint</code>, <code>open77_vehiclepicker</code></td><td>véhicules autoritaires, sièges, verrou, dégâts/réparation, carburant (state bag), peinture, sélecteur</td><td>garage, mécano, stations, convois, vol de voiture</td></tr>
+<tr><td><code>open77_npcs</code> + <code>Open77.npcs.speak</code></td><td>PNJ serveur, tâches (follow, patrol, wander), voix (barks du jeu)</td><td>vendeurs, gardes, figurants, otages</td></tr>
+<tr><td><code>open77_cyberware</code>, <code>open77_hacking</code>, <code>open77_reflex</code>, <code>open77_dash</code></td><td>implants (grades, installation asynchrone), kit de hacking (Short Circuit, Overheat…), Overdrive, dash</td><td>ripperdoc, netrunner, marché noir</td></tr>
+<tr><td><code>open77_weapons</code>, <code>open77_death</code>, <code>Open77.stats</code>, <code>open77_playerstate</code></td><td>armes (3 emplacements, relais async), état de mort, santé/endurance, <b>position et état persistés</b> entre sessions</td><td>armurerie, Trauma Team, besoins, reconnexion à la dernière position</td></tr>
+<tr><td><code>open77_appearance</code>, <code>open77_wardrobe</code>, <code>open77_equipment</code>, <code>open77_nameplates</code></td><td>créateur de personnage natif (<code>/appearance /barber /gender</code>), garde-robe (<code>/wardrobe</code>, F2), équipement, plaques de nom (couleurs, politique)</td><td>identité, boutiques de vêtements, uniformes, plaques par métier</td></tr>
+<tr><td><code>open77_uikit</code>, <code>open77_notifications</code>, <code>open77_chat</code>, <code>open77_sound</code>, <code>open77_effects</code></td><td>menus/progress/textUI/input/alert, toasts, chat (suggestions), audio de ressource, VFX/SFX</td><td>tous les menus et retours joueur</td></tr>
+<tr><td><code>open77_voice</code>, <code>open-voice</code></td><td>voix proximité, modes de portée (chuchoter/normal/crier), canaux serveur</td><td>radio par métier, téléphone</td></tr>
+<tr><td><code>open77_weather</code></td><td>horloge serveur synchronisée, météo, <code>weather.time.*</code></td><td>ambiance : réglage seulement, pas de script</td></tr>
+<tr><td><code>open77_admin</code> + ACL Warden</td><td>menu admin, <code>tp goto bring kick ban car dv gun announce</code>, droits <code>command.*</code></td><td>rp_admin étend, ne remplace pas</td></tr>
+</table></div>
+<p class="lede">Deux briques manquent et sont donc dans le plan : les <b>objets consommables</b> (le catalogue <code>items</code> ne contient que des vêtements — les objets RP sont définis en Lua) et la <b>base SQL</b> (API <code>Open77.database</code> prête, à provisionner sur le serveur d'eval avant la phase 1).</p>
+
+<h2>Phase 0 — Fondations (livrées le 17 septembre)</h2>
+<div class="tablewrap"><table>
+<tr><th>Ressource</th><th>Commandes</th><th>État</th></tr>
+<tr><td><code>rp_economy</code></td><td><code>/money /pay /givemoney /payday</code>, exports <code>getBalance add remove</code>, paie 10 min</td><td><span class="pill done">livrée</span></td></tr>
+<tr><td><code>rp_jobs</code></td><td><code>/jobs /job /mission /stopmission</code>, exports <code>getJob hasJob</code></td><td><span class="pill done">livrée</span></td></tr>
+<tr><td><code>rp_shop</code></td><td><code>/shop /buy /sell</code></td><td><span class="pill done">livrée</span></td></tr>
+<tr><td><code>rp_chat</code></td><td><code>/me /do /ooc /w /dice /showid</code></td><td><span class="pill done">livrée</span></td></tr>
+<tr><td><code>rp_medic</code></td><td><code>/soin /reanimer /911 /medic</code></td><td><span class="pill done">livrée</span></td></tr>
+<tr><td><code>eval_taxi</code></td><td><code>/taxi</code> Delamain PNJ : chauffeur visible, répliques, détecte l'absence de route</td><td><span class="pill wip">courte distance seulement</span></td></tr>
+</table></div>
+
+<h2>Phase 1 — Le socle : qui tu es, ce que tu portes, ce que tu possèdes <span class="pill done">livrée le 18 septembre</span></h2>
+
+<div class="script"><header><h3>rp_identity</h3><span class="pill done">livrée · 18 sept</span><span class="meta">M · SQL</span></header>
+<dl>
+<dt>Rôle</dt><dd>État civil persistant par identité : prénom, nom, date de naissance, sexe, origine (Night City, Badlands, corpo, nomade…). Première connexion : ouvre le créateur natif (<code>open77_appearance</code> export <code>open</code>) puis un formulaire UI kit ; l'apparence est déjà persistée par la plateforme, l'identité l'est ici.</dd>
+<dt>Commandes</dt><dd><code>/carte</code> (sa carte), action contextuelle « Montrer sa carte » (ALT+clic, <code>open77_contextmenu register</code>), <code>/civil</code> (admin : modifier).</dd>
+<dt>Intègre</dt><dd><code>Open77.players.identifier</code>, <code>open77_appearance</code>, <code>open77_uikit input/alert</code>, <code>open77_nameplates set</code> (nom RP au lieu du pseudo), <code>open77_playerstate</code> (reprise à la dernière position, déjà géré). Exports <code>get(playerId) → {firstName,lastName,birth,sex,origin}</code>, <code>fullName(playerId)</code>. Événement <code>rp_identity:changed</code>.</dd>
+<dt>Livré</dt><dd>Formulaire NCID à la première connexion, <code>/carte</code>, <code>/civil</code> (admin), action ALT+clic « Show ID », nameplate au nom RP (client). Table <code>rp_identity_citizens</code>. Joué le 18 sept avec un client agent : inscription « Vince Kovac, citizen #1 » écrite en SQL, <code>/carte</code> relue après restart.</dd>
+<dt>Test</dt><dd>Se connecter avec une identité neuve → créateur → formulaire → nameplate au nom RP ; reconnecter → identité restaurée ; ALT+clic un joueur → sa carte sans le solde.</dd>
+</dl>
+<p class="goal"><code>/goal construire rp_identity via le MCP : état civil SQL créé à la première connexion après le créateur natif open77_appearance, carte d'identité par contextmenu, nom RP dans les nameplates, exports get/fullName ; déployer sur le serveur d'eval et tester en jeu avec moi</code></p></div>
+
+<div class="script"><header><h3>rp_inventory</h3><span class="pill done">livrée · 18 sept</span><span class="meta">L · SQL</span></header>
+<dl>
+<dt>Rôle</dt><dd>Inventaire à poids, objets définis en table Lua (données : nourriture, boissons, chooh2, kit de soin, MaxDoc, bandages, téléphone, radio, clés, crochet, ferraille, composants, puces, eurodollars en liquide), utilisation qui appelle un effet (soin → <code>Open77.stats.restore</code>, manger → besoins), dépôt au sol comme objet <code>open77_loot</code> ramassable, objet en main via <code>open77_helditems</code>, fouille (NCPD) et vol à la tire (gangs) par contextmenu avec accept/decline quand il faut. Coffres (appartement, véhicule) par export.</dd>
+<dt>Commandes</dt><dd><code>/inv</code> (menu UI kit), <code>/give &lt;id&gt; &lt;objet&gt; &lt;n&gt;</code> ou action « Donner », <code>/use &lt;objet&gt;</code>, <code>/drop &lt;objet&gt; &lt;n&gt;</code>, <code>/ramasser</code> (ou prompt), <code>/fouiller &lt;id&gt;</code>.</dd>
+<dt>Intègre</dt><dd><code>open77_loot create/requestPickup</code>, <code>open77_helditems hold/release</code>, <code>open77_contextmenu</code>, <code>open77_uikit</code>, <code>rp_identity</code>. Exports <code>has add remove count list openStash(playerId, stashId)</code>. Événements <code>rp_inventory:changed</code>, <code>rp_inventory:used</code>.</dd>
+<dt>Livré</dt><dd><code>/inv</code> (panneau WebUI POCKETS, repli en liste chat sans WebUI), <code>/use /drop /ramasser /give /fouiller /saisir</code>, <code>/giveitem</code> (admin/console), 17 objets en table (<code>shared/items.lua</code>), poids 40 kg, coffres par <code>openStash</code>. Tables <code>rp_inventory_items</code>, <code>rp_inventory_stashes</code>. Joué le 18 sept : giveitem → /inv → burrito consommé (faim +35 via rp_needs) → eau lâchée en loot → <code>/ramasser</code>.</dd>
+<dt>Test</dt><dd>Donner un objet à un second joueur, le lâcher, le ramasser, l'utiliser (soin visible sur la barre de vie), fouiller un joueur menotté.</dd>
+</dl>
+<p class="goal"><code>/goal construire rp_inventory via le MCP : inventaire SQL à poids avec objets définis en table, give/use/drop via open77_loot et helditems, fouille par contextmenu, coffres par export ; déployer et tester en jeu avec moi</code></p></div>
+
+<div class="script"><header><h3>rp_bank</h3><span class="pill done">livrée · 18 sept</span><span class="meta">M · SQL</span></header>
+<dl>
+<dt>Rôle</dt><dd>Liquide (<code>rp_economy</code>) vs compte : distributeurs (POI + prompt <code>open77_interactions</code> sur des positions configurées), dépôt/retrait/virement, historique, comptes de société (patrons), frais. Le vol prend le liquide, jamais le compte. La paie de <code>rp_economy</code> passe sur le compte.</dd>
+<dt>Commandes</dt><dd>prompt « Utiliser le distributeur », <code>/virement &lt;id&gt; &lt;montant&gt;</code>, <code>/solde</code>.</dd>
+<dt>Intègre</dt><dd><code>rp_economy</code> (liquide), <code>open77_worldui create</code>, <code>open77_interactions</code>, <code>open77_uikit</code>. Exports <code>getAccount deposit withdraw transfer society(name)</code>.</dd>
+</dl>
+<p class="goal"><code>/goal construire rp_bank via le MCP : comptes SQL séparés du liquide, distributeurs POI interactifs, virements, historique, comptes de société ; brancher la paie de rp_economy dessus ; déployer et tester en jeu avec moi</code></p></div>
+
+<div class="script"><header><h3>rp_needs</h3><span class="pill done">livrée · 18 sept</span><span class="meta">S · SQL</span></header>
+<dl>
+<dt>Rôle</dt><dd>Faim, soif, fatigue qui baissent ; à zéro, endurance réduite puis dégâts lents (<code>Open77.stats</code>) ; consommables de l'inventaire ; alcool/drogues = VFX (<code>open77_effects playVfx</code>) et tremblement. Valeurs exposées pour le HUD.</dd>
+<dt>Intègre</dt><dd><code>rp_inventory used</code>, <code>Open77.stats</code>, <code>open77_effects</code>. Export <code>get(playerId)</code>, événement <code>rp_needs:changed</code>.</dd>
+</dl>
+<p class="goal"><code>/goal construire rp_needs via le MCP : faim/soif/fatigue persistantes avec effets sur les stats, consommables de rp_inventory, effets visuels alcool/drogue ; déployer et tester en jeu avec moi</code></p></div>
+
+<h2>Phase 2 — Les métiers : douze professions, cinq avec des runs scriptés <span class="pill done">livrée le 18 septembre</span></h2>
+<p class="lede">Un métier = une ressource. Toutes passent par <code>rp_jobs</code> v2 (grades, patrons, prise de service, société) et paient par <code>rp_bank</code>. Les runs utilisent <code>open77_loot</code> (objets à collecter), <code>open77_helditems</code> (objet porté), <code>open77_uikit progress</code> (temps d'action), les animations RP (<code>examine</code> = accroupi, <code>give</code>, <code>phone</code>) et des zones hors ville pour le travail de terrain.</p>
+
+<div class="script"><header><h3>rp_jobs v2 — grades, patrons, service, société</h3><span class="pill done">livrée · 18 sept</span><span class="meta">M · SQL</span></header>
+<dl>
+<dt>Rôle</dt><dd>Grades par métier (recrue → patron), <code>/embaucher /virer /promouvoir</code> réservés au patron, <code>/service</code> (en/hors service, conditionne les commandes et la couleur de nameplate), compte de société (<code>rp_bank society</code>), paie versée par la société aux employés en service, agence pour l'emploi (POI) pour les métiers civils. Les métiers légaux : <code>ncpd</code>, <code>trauma</code>, <code>delamain</code>, <code>mecano</code>, <code>ripper</code>, <code>nomade</code>, <code>ferrailleur</code>, <code>barman</code>, <code>fixer</code>, <code>netrunner</code>, <code>vigile</code> ; le douzième est <code>gang</code> (phase 4).</dd>
+<dt>Intègre</dt><dd><code>rp_jobs</code> (exports conservés), <code>rp_bank</code>, <code>open77_nameplates setPolicy</code>. Exports <code>getGrade isBoss onDuty setJob(admin)</code>, événement <code>rp_jobs:duty</code>.</dd>
+<dt>Livré</dt><dd>Douze métiers, grades 0..3, <code>/jobs /job /service /agence /embaucher /virer /promouvoir</code>, <code>/setjob</code> (admin/console, amorce la société à 50 000 €$), agence POI (E + borne-terminal) sur The Gallery, la passerelle au nord de Kabuki Market (<code>-1173.12, 2087.44</code>, 83 m du spawn), paie de société toutes les 10 min en liquide, nameplate <code>[NCPD] Nom</code> pour les joueurs en service (distants). Table <code>rp_jobs_employees</code>. <code>/mission</code> retiré (remplacé par rp_nomade). Joué le 18 sept : setjob → /service → /job → menu agence.</dd>
+</dl>
+<p class="goal"><code>/goal étendre rp_jobs via le MCP : douze métiers, grades, patrons, prise de service avec nameplate, société avec compte et paie, agence pour l'emploi ; conserver les exports ; déployer et tester en jeu avec moi</code></p></div>
+
+<div class="script"><header><h3>rp_ncpd — police</h3><span class="pill done">livrée · 18 sept</span><span class="meta">L</span></header>
+<dl>
+<dt>Rôle</dt><dd>Actions par contextmenu sur un joueur : menotter/démenotter, escorter, fouiller (lit <code>rp_inventory</code>, saisit l'illégal), amende (<code>rp_bank</code>), embarquer dans le véhicule ; <code>/prison &lt;id&gt; &lt;min&gt;</code> (cellule = zone <code>polyzone</code> + porte <code>open77_doors setAccess</code>, sortie automatique, tenue de détenu via <code>open77_wardrobe</code>), casier (SQL), mandats, <code>/plaque</code> (propriétaire d'un véhicule via <code>rp_garage</code>, phase 3), armurerie et garage du commissariat, radio NCPD (<code>open77_voice</code> canal), gyrophare/sirène (<code>Open77.vehicles</code> flags), barrages (props). Le MDT arrive en phase 4.</dd>
+<dt>Intègre</dt><dd><code>open77_rp_basics cuff escort search carry</code>, <code>open77_contextmenu</code>, <code>open77_player_interactions</code>, <code>polyzone</code>, <code>open77_doors</code>, <code>open77_weapons assign</code>, <code>open77_voice</code>, <code>rp_inventory</code>, <code>rp_bank</code>. Exports <code>isOnDuty wanted(playerId) record(playerId)</code>, événements <code>rp_ncpd:alert</code> (reçus de rp_crime, rp_bank…), <code>rp_ncpd:arrest</code>.</dd>
+<dt>Livré</dt><dd><code>/bank</code> au distributeur (5 POI worldui + pin de carte + invite E + borne-terminal spawnée : trois sur Kabuki Market, un dans l'Afterlife, un dans la clinique de Vik), <code>/solde</code>, <code>/virement</code> (frais 1 %), <code>/societe</code>. Menu dépôt / retrait / virement / relevé. Tables <code>rp_bank_accounts</code>, <code>rp_bank_transactions</code>, <code>rp_bank_societies</code>. Joué le 18 sept : dépôt 300, retrait 100, relevé, solde relu après restart.</dd>
+<dt>Livré</dt><dd>Faim / soif / fatigue décroissantes, effets à 25 % et 0 %, <code>/needs</code>, <code>/setneeds</code> (admin), export <code>consume</code> branché sur <code>rp_inventory</code>. Table <code>rp_needs_state</code>. Joué le 18 sept : biomoniteur, consommation eau/burrito, valeurs relues après restart.</dd>
+<dt>Livré</dt><dd><code>/menotter /demenotter /escorter /fouille [saisir] /amende [payer] /embarquer /prison /liberer /casier /mandat [lever] /ncpd [texte]</code> + ALT+clic (10 actions), amendes acceptées via <code>open77_player_interactions</code>, prison (cellule dans le vrai bâtiment NCPD du centre-ville, zone <code>ncpd_hq</code> <code>-1761.5, -1010.8, 94.3</code>, peine persistante, blocage armes), avant-poste de patrouille sur la rue de l'Afterlife (<code>-1408, 960</code>, holo NCPD + barrière), casier SQL, mandats, radio texte + canal voix <code>NCPD dispatch</code> (<code>Open77.voice.createChannel</code>), alertes <code>rp_ncpd:alert</code> avec blip. Tables <code>rp_ncpd_records/_warrants/_fines/_sentences</code>. Joué le 18 sept (solo) : /service, /ncpd, radio ; les actions sur suspect attendent un second joueur.</dd>
+<dt>Test</dt><dd>Deux joueurs : menotter, fouiller, amende acceptée, prison 2 min avec libération automatique, casier consulté.</dd>
+</dl>
+<p class="goal"><code>/goal construire rp_ncpd via le MCP : actions police par contextmenu sur open77_rp_basics (menottes, escorte, fouille avec saisie, amende), prison par zone et porte avec libération auto, casier SQL, mandats, radio NCPD, armurerie et garage du commissariat ; déployer et tester en jeu avec moi</code></p></div>
+
+<div class="script"><header><h3>rp_trauma — Trauma Team et mort RP</h3><span class="pill done">livrée · 18 sept</span><span class="meta">M</span></header>
+<dl>
+<dt>Rôle</dt><dd>Remplace le respawn automatique du freeroam : à la mort, état « au sol » 10 min (<code>open77_death</code> state, gel des entrées via <code>player-freeze</code>), appel automatique aux médecins en service avec blip, <code>/respawn</code> seulement après le délai ou sans médecin, facture hôpital ; <code>/soin /reanimer</code> de <code>rp_medic</code> deviennent des actions contextmenu ; AV Trauma Team du garage hôpital ; contrat Trauma (abonnement mensuel prélevé par <code>rp_bank</code>, priorité d'intervention).</dd>
+<dt>Intègre</dt><dd><code>rp_medic</code> (absorbé), <code>open77_death</code>, <code>Open77.players.revive</code>, <code>open77_blips</code>, <code>open77_uikit progress</code>, <code>freeroam</code> (config <code>autoRespawn=false</code>).</dd>
+<dt>Livré</dt><dd>Absorbe rp_medic. État « down » 60 s (config eval ; 600 en prod) après la mort : la plateforme n'a pas de blocage du respawn, la ressource téléporte le corps au lieu de la mort, gèle, santé 5 %, bloque les entrées et affiche le compte à rebours ; médecins en service alertés avec blip ; <code>/respawn</code> vers « l'hôpital » = la clinique de Viktor (<code>-1546, 1231</code>, zone <code>viktor_clinic</code>) facturé 500 €$ (<code>rp_bank:charge</code> puis liquide puis dette) ; ALT+clic Stabilise / Revive ; <code>/trauma av</code> (AV Trauma sur le pad de la rue de l'Afterlife, <code>-1408, 960</code>, r 15) ; <code>/contrat</code> Trauma Team 1 000 €$ / 30 min. Correctifs le 18 sept : phase « dead » à la connexion et kills scriptés (<code>cause=script</code>, <code>weapon=open77_admin:tp</code>) ignorés. Joué : /suicide → down → /respawn chez Vik, facture payée en liquide.</dd>
+</dl>
+<p class="goal"><code>/goal construire rp_trauma via le MCP en absorbant rp_medic : état au sol avec délai à la place du respawn auto, appel automatique avec blip, actions soin/réanimation par contextmenu, AV hôpital, contrat Trauma Team prélevé mensuellement ; déployer et tester en jeu avec moi</code></p></div>
+
+<div class="script"><header><h3>rp_delamain — taxi joueur</h3><span class="pill done">livrée · 18 sept</span><span class="meta">M</span></header>
+<dl>
+<dt>Rôle</dt><dd>Un client fait <code>/taxi</code> (ou l'annuaire du téléphone) : les chauffeurs Delamain en service reçoivent l'appel avec distance et blip, <code>/accepter</code>, waypoint vers le client, compteur au kilomètre (position serveur toutes les 2 s), paiement automatique à la descente (<code>rp_bank</code>), note du client. Sans chauffeur en service : repli sur le taxi PNJ actuel pour les destinations proches (&lt; 300 m), refus poli au-delà.</dd>
+<dt>Intègre</dt><dd><code>open77_vehicles getPlayerSeat</code>, <code>onPlayerLeftVehicle</code>, <code>open77_blips</code> (relais client), <code>eval_taxi</code> (repli), <code>rp_jobs</code> v2.</dd>
+<dt>Livré</dt><dd><code>/delamain</code> (appel), <code>/accepter</code>, <code>/course</code>, <code>/fin</code>, <code>/note</code>, <code>/delamain annuler</code> ; presets de vraies rues (<code>afterlife</code> = rue de l'Afterlife, <code>afterlife_lot</code>, <code>dealer</code> = concession Westbrook, <code>lizzies</code>) ; compteur au 100 m mesuré côté serveur toutes les 2 s, 80 % chauffeur / 20 % société, repli « /taxi » sans chauffeur. Table <code>rp_delamain_rides</code>. Joué le 18 sept : appel sans chauffeur → repli annoncé ; la course complète attend deux joueurs.</dd>
+</dl>
+<p class="goal"><code>/goal construire rp_delamain via le MCP : appels clients aux chauffeurs en service, acceptation, waypoint et blip, compteur au km, paiement à la descente, repli sur le taxi PNJ pour les courtes distances ; déployer et tester en jeu avec moi (client agent en second joueur)</code></p></div>
+
+<div class="script"><header><h3>rp_mecano</h3><span class="pill done">livrée · 18 sept</span><span class="meta">M</span></header>
+<dl>
+<dt>Rôle</dt><dd><code>/reparer</code> (progress 15 s, consomme des composants de l'inventaire, <code>Open77.vehicles.repair</code>), <code>/remorquer</code> (dépanneuse : attache le véhicule ciblé, le libère à l'atelier), <code>/peindre</code> (<code>vehicle-paint</code>, facturé), <code>/facture &lt;id&gt; &lt;montant&gt;</code> acceptée par le client (<code>open77_player_interactions</code>), fourrière à l'atelier, station de gonflage/plein (<code>open77_fuel refuel</code>).</dd>
+<dt>Intègre</dt><dd><code>open77_vehicles</code>, <code>open77_fuel</code>, <code>vehicle-paint</code>, <code>open77_uikit progress</code>, <code>rp_inventory</code>, <code>rp_bank</code>.</dd>
+</dl>
+<p class="goal"><code>/goal construire rp_mecano via le MCP : réparation avec composants et barre de progression, remorquage, peinture facturée, factures acceptées par le client, fourrière, plein ; déployer et tester en jeu avec moi</code></p></div>
+
+<div class="script"><header><h3>rp_ripperdoc</h3><span class="pill done">livrée · 18 sept</span><span class="meta">M</span></header>
+<dl>
+<dt>Rôle</dt><dd>Le ripper installe et retire des implants sur un patient allongé (animation <code>lie</code>, chaise = prop), à partir du catalogue de <code>open77_cyberware</code> (grades) : chaque implant a un prix, un stock (objet d'inventaire « implant en boîte » acheté au marché noir ou fourni par le fixer), une durée d'opération (progress), un risque (cyberpsychose légère = VFX si trop d'implants). Menu patient/ripper via UI kit ; le patient valide le devis (accept/decline).</dd>
+<dt>Intègre</dt><dd><code>open77_cyberware</code> (install/remove asynchrones, <code>onCyberwareOperationCompleted</code>), <code>open77_uikit</code>, <code>rp_inventory</code>, <code>rp_bank</code>, animations RP.</dd>
+</dl>
+<p class="goal"><code>/goal construire rp_ripperdoc via le MCP : installation et retrait d'implants open77_cyberware par un ripper sur un patient allongé, implants en boîte dans l'inventaire, devis accepté par le patient, opération avec progression ; déployer et tester en jeu avec moi</code></p></div>
+
+<div class="script"><header><h3>rp_nomade — convois et livraisons Badlands</h3><span class="pill done">livrée · 18 sept</span><span class="meta">L</span></header>
+<dl>
+<dt>Rôle</dt><dd>Le run scripté principal, remplace la mission livreur : au camp nomade (zone Badlands, POI), prendre un contrat (UI kit) : charger N caisses (props ramassables → objet en main → dans le coffre du camion loué au camp), livrer à un entrepôt de Night City (zone), décharger (prompt + progress), paiement à la caisse + prime si convoi (2 joueurs et plus, bonus partagé). Risque : sur la route, une zone « embuscade » peut spawner 3–4 PNJ hostiles (<code>open77_npcs</code>, combat activé) ; le chargement est volable (rp_crime). Bloc de contrats persistant (SQL) pour que le patron voie qui a livré quoi.</dd>
+<dt>Intègre</dt><dd><code>polyzone</code>, <code>open77_worldui</code>, <code>open77_loot</code>, <code>open77_helditems</code>, <code>open77_vehicles</code> (camion : <code>Vehicle.v_standard3_*</code> ou <code>v_utility4_*</code> du catalogue), <code>open77_npcs</code>, <code>open77_uikit</code>, <code>rp_bank</code>.</dd>
+<dt>Livré</dt><dd><code>/reparer</code> (barre 15 s, 2 composants, <code>Open77.vehicles.repair</code>), <code>/remorquer</code> (pas de native d'attache sur op77.76 : remorquage par <code>setTransform</code> 6 m derrière toutes les 2 s), <code>/peindre</code>, <code>/facture</code> (consentement), <code>/fourriere</code> (casse de Rancho Coronado), <code>/plein</code> ; atelier + pompe sur la rue de l'Afterlife (<code>-1396, 966</code>, enseigne, bloque-pneus, pompe en props) ; objets <code>toolkit</code>, <code>paint_can</code> définis via <code>rp_inventory:define</code>. Joué le 18 sept : santé 0,4 → 1,0 après réparation, plein 60 L, peinture rouge, remorquage accroché.</dd>
+<dt>Livré</dt><dd>Chaise (posture <code>lie</code> via <code>Open77.animations.playAt</code>) = la vraie chaise de la clinique de Viktor (<code>-1548, 1230, 11.6</code>, zone <code>viktor_clinic</code>), catalogue lu dans <code>open77_cyberware</code> (5 implants : deck, ice, purge…), boîtes d'implants dans l'inventaire, devis accepté par le patient (<code>open77_player_interactions</code>), opération avec barre de progression des deux côtés, <code>rp_bank:charge</code>. Table <code>rp_ripperdoc_operations</code>. Démarre proprement ; l'opération attend deux joueurs.</dd>
+<dt>Livré</dt><dd>Tableau de contrats au camp Aldecaldos (<code>1790, 2252, 180.3</code>, POI + caisses cargo en props ; destinations casse de Rancho Coronado, rue de l'Afterlife, Drive-In Theater), camion loué (<code>Vehicle.v_standard3_thorton_mackinaw_player</code>, caution 100 €$), caisses props ramassées en main (<code>Open77.props.attach</code> RightHand), chargement/déchargement/retour par prompts sur le camion (<code>open77_interactions</code> globalVehicle), embuscade sur la route camp → casse (cercle vers <code>1600, 600</code>), prime de convoi, table <code>rp_nomade_contracts</code>. Joué le 18 sept : contrat → caisse en main → chargée → embuscade (3 PNJ hostiles, état COMBAT) ; le déchargement attend un vrai conducteur (l'entrée clavier synthétique ne pilote pas le camion).</dd>
+<dt>Test</dt><dd>Prendre un contrat, charger 3 caisses, rouler jusqu'à l'entrepôt, décharger, être payé ; embuscade déclenchée en passant la zone.</dd>
+</dl>
+<p class="goal"><code>/goal construire rp_nomade via le MCP : contrats de convoi depuis un camp Badlands (zone + POI), caisses props ramassables chargées dans un camion loué, livraison en zone entrepôt avec progression, paiement et prime de convoi, embuscades PNJ en zone ; déployer et tester en jeu avec moi</code></p></div>
+
+<div class="script"><header><h3>rp_ferrailleur — récup et mine hors ville</h3><span class="pill done">livrée · 18 sept</span><span class="meta">M</span></header>
+<dl>
+<dt>Rôle</dt><dd>Le métier « mineur » de Night City : des points de collecte dans une zone hors ville (casse de Rancho Coronado / champs pétroliers) marqués par des cercles au sol ; à chaque point, prompt « Fouiller la carcasse » → animation accroupie (<code>examine</code>) + progress 8 s → objet <code>ferraille</code> / <code>composant</code> / rarement <code>puce</code> dans l'inventaire (poids !). Un point se régénère après 5 min. Revente au ferrailleur (PNJ vendeur, prix variable) ; les composants nourrissent le mécano et le ripper. Outil requis : <code>pied-de-biche</code> (inventaire, s'use). Tenue de travail conseillée (wardrobe).</dd>
+<dt>Intègre</dt><dd><code>polyzone</code>, <code>open77_groundcircle</code>, <code>open77_interactions</code>, <code>open77_uikit progress</code>, animations RP <code>examine</code>, <code>open77_npcs</code> (acheteur), <code>rp_inventory</code>, <code>rp_bank</code>.</dd>
+<dt>Livré</dt><dd>7 épaves dans la vraie casse de Rancho Coronado (zone <code>junkyard</code>, <code>1374.9, -1674.9</code>, Badlands ; anneaux + invite E, props bidon / pneu / tôle), pied-de-biche à 250 €$ chez Rusty (PNJ, <code>1368, -1676</code>), fouille accroupie 8 s (<code>examine</code>), butin ferraille/composants/puce, régénération 5 min, usure 20 fouilles, revente à prix variables (90 % joueur / 10 % société), <code>/ferraille</code>, <code>/vendre</code>. Table <code>rp_ferrailleur_tools</code>. Joué le 18 sept de bout en bout : achat → fouille (+1 puce) → vente 288 €$.</dd>
+</dl>
+<p class="goal"><code>/goal construire rp_ferrailleur via le MCP : points de collecte hors ville avec cercles au sol, prompt + animation accroupie + progression, objets ferraille/composants/puces avec régénération, outil qui s'use, revente à un PNJ ; déployer et tester en jeu avec moi</code></p></div>
+
+<div class="script"><header><h3>rp_bar — barman de l'Afterlife</h3><span class="pill done">livrée · 18 sept</span><span class="meta">S</span></header>
+<dl>
+<dt>Rôle</dt><dd>Derrière le comptoir (zone), le barman prépare des boissons (recettes = ingrédients d'inventaire + progress, animation <code>drink</code> côté client) et les vend ; les clients consomment (besoins, effets alcool) ; caisse du bar sur le compte société ; musique via <code>open77_sound play</code> (fichiers libres livrés par la ressource).</dd>
+<dt>Intègre</dt><dd><code>polyzone</code>, <code>open77_uikit</code>, <code>rp_inventory</code>, <code>rp_needs</code>, <code>rp_bank society</code>, <code>open77_sound</code>.</dd>
+<dt>Livré</dt><dd>Comptoir = le vrai bar de l'Afterlife (POI <code>-1451.5, 1012.5, 17.8</code>, zone <code>afterlife</code>) : recettes (4 boissons, ingrédients + barre 4 s), réassort payé par la caisse, caisse ; vente par ALT+clic « Serve a drink » avec consentement ou <code>/servir</code> ; boissons définies via <code>rp_inventory:define</code> avec effet <code>rp_needs:apply</code> ; niveau d'ivresse ; ambiance sonore synthétisée livrée. Table <code>rp_bar_sales</code>. Joué le 18 sept : réassort ×3 → bière mixée → bue (soif +25, buzz 1).</dd>
+</dl>
+<p class="goal"><code>/goal construire rp_bar via le MCP : comptoir en zone, recettes de boissons avec ingrédients et progression, vente aux clients qui consomment via rp_needs, caisse de société, ambiance sonore ; déployer et tester en jeu avec moi</code></p></div>
+
+<div class="script"><header><h3>rp_fixer — tableau de gigs</h3><span class="pill done">livrée · 18 sept</span><span class="meta">M · SQL</span></header>
+<dl>
+<dt>Rôle</dt><dd>Le fixer publie des gigs (UI kit) : livraison discrète (objet A → point B), récupération (objet dans une zone gardée par PNJ), protection (escorter un PNJ d'un point à un autre, <code>npcs follow</code>), extraction. Les joueurs acceptent, ont un temps limité, sont payés à la réussite ; le fixer prend sa commission ; réputation par joueur (débloque des gigs mieux payés). Gigs générés depuis une table de gabarits + positions configurées.</dd>
+<dt>Intègre</dt><dd><code>open77_npcs</code>, <code>open77_loot</code>, <code>polyzone</code>, <code>open77_blips</code>, <code>rp_inventory</code>, <code>rp_bank</code>, SQL.</dd>
+<dt>Livré</dt><dd>Tableau de gigs au bureau = la salle de réunion de Rogue au fond de l'Afterlife (POI + borne-terminal, <code>-1436.8, 977</code> ; objectifs à Noodle Row, Lizzie's, H10 et la casse ; <code>/gigs</code>) : livraison, récupération gardée, escorte PNJ, extraction ; acceptation avec limite de temps, waypoint/blip d'objectif, paiement + commission 15 %, réputation (street/known/trusted), <code>/gig</code>, <code>/gig abandonner</code>, <code>/fixer publier</code>. Tables <code>rp_fixer_gigs</code>, <code>rp_fixer_reputation</code>. Joué le 18 sept : tableau, acceptation d'une escorte (blip), abandon.</dd>
+</dl>
+<p class="goal"><code>/goal construire rp_fixer via le MCP : tableau de gigs publiés par un fixer (livraison, récupération gardée par PNJ, escorte, extraction), acceptation avec limite de temps, paiement à la réussite, commission, réputation ; déployer et tester en jeu avec moi</code></p></div>
+
+<div class="script"><header><h3>rp_netrunner — contrats de hacking</h3><span class="pill done">livrée · 18 sept</span><span class="meta">M</span></header>
+<dl>
+<dt>Rôle</dt><dd>Exploite le kit <code>open77_hacking</code> : le netrunner (implant OS requis via ripper) vend des contrats — brouiller la radio NCPD 60 s, ouvrir une porte verrouillée (<code>open77_doors requestOpen</code>) depuis un point d'accès (prop + prompt + mini-progress), pister un joueur (blip temporaire), Short Circuit/Overheat sur un joueur ciblé. Chaque action coûte des « quickhacks » (objets), laisse une trace consultable par le NCPD (rp_logs).</dd>
+<dt>Intègre</dt><dd><code>open77_hacking</code>, <code>open77_cyberware</code> (OS), <code>open77_doors</code>, <code>open77_blips</code>, <code>rp_inventory</code>, <code>rp_ncpd</code>.</dd>
+<dt>Livré</dt><dd><code>/netrun [deck …]</code>, <code>/ping</code>, <code>/court_circuit</code>, <code>/surchauffe</code> (kit <code>Open77.hacking</code>, deck <code>rp_netrunner.deck</code> installé dans le slot OS via <code>open77_cyberware</code>), <code>/brouiller</code> (60 s, événement <code>rp_netrunner:jammed</code>), <code>/breach</code> au point d'accès de l'arrière-salle de l'Afterlife (<code>-1419.9, 989.4</code>, prop terminal), quickhacks consommables, traces vers <code>rp_ncpd</code>. Table <code>rp_netrunner_log</code>. Joué le 18 sept : statut, brouillage ; les hacks sur joueur attendent un second joueur.</dd>
+</dl>
+<p class="goal"><code>/goal construire rp_netrunner via le MCP : contrats de hacking sur open77_hacking (brouillage radio, ouverture de porte depuis un point d'accès, pistage, quickhacks sur joueur), implant OS requis, quickhacks consommables, traces pour le NCPD ; déployer et tester en jeu avec moi</code></p></div>
+
+<div class="script"><header><h3>rp_vigile — sécurité privée</h3><span class="pill done">livrée · 18 sept</span><span class="meta">S</span></header>
+<dl>
+<dt>Rôle</dt><dd>Contrats de garde pour un lieu (zone) ou un joueur : présence en zone payée à la minute, droit d'escorter/expulser (<code>rp_basics escort</code>) hors de la zone, caméra de surveillance (liste des joueurs entrés). Vendu par les corpos (fixer) et les commerces.</dd>
+<dt>Intègre</dt><dd><code>polyzone</code>, <code>open77_rp_basics</code>, <code>rp_bank</code>, <code>rp_fixer</code>.</dd>
+<dt>Livré</dt><dd><code>/garde</code> (tableau : 6 contrats de zone + offres), <code>/garde engager</code>, <code>/garde fin</code>, <code>/garde journal</code> (caméra : entrées/sorties de la zone), paie à la minute (16 €$ vigile + 4 €$ société), payeur = société du métier de la zone, expulsion (<code>/expulser</code>) et escorte hors zone. Table <code>rp_vigile_contracts</code>. Joué le 18 sept : contrat Afterlife pris, minutes payées par la société du bar.</dd>
+</dl>
+<p class="goal"><code>/goal construire rp_vigile via le MCP : contrats de garde de zone ou de personne payés à la minute, escorte/expulsion hors zone, journal des entrées ; déployer et tester en jeu avec moi</code></p></div>
+
+<h2>Phase 3 — Le monde : garages, logements, commerces, zones <span class="pill done">livrée le 18 septembre</span></h2>
+
+<div class="script"><header><h3>rp_garage</h3><span class="pill done">livrée · 18 sept</span><span class="meta">L · SQL</span></header>
+<dl>
+<dt>Rôle</dt><dd>Véhicules possédés : plaque, propriétaire, clés (contextmenu « Donner un double »), verrouillage (<code>Open77.vehicles</code> flag locked), garages publics et de société (POI) pour ranger/sortir avec état conservé (carburant <code>open77_fuel</code>, dégâts, peinture), fourrière NCPD/mécano, concessionnaire (vitrine PNJ, <code>open77_vehiclepicker</code> pour choisir) remplaçant l'onglet véhicules de <code>rp_shop</code>. <code>/car</code> du freeroam devient admin-only.</dd>
+<dt>Intègre</dt><dd><code>open77_vehicles</code>, <code>open77_fuel</code>, <code>vehicle-paint</code>, <code>open77_vehiclepicker</code>, <code>open77_worldui</code>, <code>rp_bank</code>, SQL. Exports <code>ownerOf(vehicleId) hasKey(playerId, vehicleId) impound(vehicleId)</code>.</dd>
+<dt>Livré</dt><dd><code>/concession</code>, <code>/garage</code>, <code>/cles [id|revoke]</code>, <code>/verrouiller</code>, <code>/plaque</code> ; menus contextmenu, anneaux + E (garage public <i>Afterlife street lot</i> <code>-1408, 960</code> avec enseigne, garage mécano <code>-1396, 966</code>, concession <i>Westbrook Motors</i> <code>-1442.2, 127.4</code> avec cadre néon, voiture livrée sur la grille de course de Westbrook ; fourrière à la casse), pins carte. Tables <code>rp_garage_vehicles</code>, <code>rp_garage_keys</code> ; exports <code>ownerOf hasKey plateOf vehiclesOf spawnOwned impound setWanted</code>, événement <code>rp_garage:changed</code>. Joué le 18 sept : achat d'une Arch Nazare (plaque NC-9TX3, liquide), <code>/plaque</code>, perte (véhicule retiré du monde → de retour au garage en 30 s), sortie au garage public, rangement avec carburant (60 L) et état conservés en SQL. Clés partagées, verrou d'un tiers et fourrière = second joueur.</dd>
+</dl>
+<p class="goal"><code>/goal construire rp_garage via le MCP : véhicules possédés en SQL avec plaque, clés partagées, verrou, garages publics et de société conservant carburant/dégâts/peinture, fourrière, concessionnaire avec vehiclepicker ; rendre /car admin-only ; déployer et tester en jeu avec moi</code></p></div>
+
+<div class="script"><header><h3>rp_housing</h3><span class="pill done">livrée · 18 sept</span><span class="meta">L · SQL</span></header>
+<dl>
+<dt>Rôle</dt><dd>Appartements et planques : porte du monde verrouillée par le propriétaire (<code>open77_doors setAccess</code>), clés partagées, coffre (<code>rp_inventory openStash</code>), point de réapparition, loyer prélevé à la paie, agence immobilière (POI). Repérage préalable en jeu de 5 portes réelles avec <code>open77_doors near</code>.</dd>
+<dt>Intègre</dt><dd><code>open77_doors</code>, <code>open77_interactions</code>, <code>polyzone</code>, <code>open77_worldui</code>, <code>rp_inventory</code>, <code>rp_bank</code>, SQL.</dd>
+<dt>Livré</dt><dd><code>/agence_immo</code>, <code>/maison [cles|retirer|spawn|vendre|acheter]</code>, <code>/loyer [payer]</code> ; 5 vrais appartements — Northside, Glen (Heywood), V's Apartment / Megabuilding H10, Judy's (Kabuki), Japantown — avec leur porte réelle revendiquée via <code>open77_doors</code> (« auto door », repli intérieur + 3 m), intérieur + coffre + sortie en anneaux E, agence <i>Night City Real Estate</i> à The Crossing (Kabuki Market, borne-terminal), pins carte, loyer à la paie, éviction, réapparition chez soi. Tables <code>rp_housing_homes</code>, <code>rp_housing_keys</code> ; exports <code>homeOf isInside stashOf hasKey</code>. Joué le 18 sept : achat du Northside Apartment (9 000 €$), <code>/maison</code>, trois loyers prélevés (500 €$/paie). Le soir, les cinq logements sont devenus de vrais appartements (intérieurs AMM) et la porte réelle de H10 a été découverte à chaud (<code>auto door of h10_studio</code>, anneau déplacé). Après le correctif du budget script client (base #35, moitié Lua déployée sur l'eval) : E sur la porte → intérieur, E sur le coffre → pied-de-biche rangé (<code>rp_inventory_stashes</code>), E sur la porte d'entrée → dehors, <code>/maison spawn</code>, <code>/loyer payer</code>. Clés partagées et éviction = second joueur / owner.</dd>
+</dl>
+<p class="goal"><code>/goal construire rp_housing via le MCP : appartements achetables/louables sur des portes réelles (open77_doors), clés, coffre via rp_inventory, spawn, loyer, agence ; repérer 5 portes avec moi d'abord ; déployer et tester en jeu</code></p></div>
+
+<div class="script"><header><h3>rp_shops v2 — commerces dans le monde</h3><span class="pill done">livrée · 18 sept</span><span class="meta">M</span></header>
+<dl>
+<dt>Rôle</dt><dd>Remplace <code>/shop</code> par des boutiques placées avec PNJ vendeur qui parle : supérette (nourriture, boissons, chooh2), armurerie (permis NCPD requis, registre), vêtements (ouvre <code>open77_wardrobe</code> et facture), pharmacie (MaxDoc, bandages), marché noir (zone gang, la nuit). Catalogue et prix dans le fichier de config ; stock de société pour les commerces tenus par des joueurs ; braquables (rp_crime).</dd>
+<dt>Intègre</dt><dd><code>open77_npcs</code> + <code>speak</code>, <code>open77_interactions</code>, <code>open77_worldui</code>, <code>open77_wardrobe</code>, <code>open77_weapons</code>, <code>rp_inventory</code>, <code>rp_bank</code>.</dd>
+<dt>Livré</dt><dd><code>/boutiques</code>, <code>/acheter &lt;id&gt; [n]</code> ; 5 stands de Kabuki Market avec vendeur PNJ et prop (supermarché Noodle Row, pharmacie The Stalls, armurerie East Row avec licence, vêtements Vendor Lane, marché noir du Lower Walkway sous le marché), stock et ventes en SQL, arme livrée par <code>Open77.weapons.assign</code>. Tables <code>rp_shops_stock</code>, <code>rp_shops_sales</code>, <code>rp_shops_licences</code> ; exports <code>openShop stock rob</code>. Joué le 18 sept : eau ×2, licence d'arme (500 €$), Lexington (400 €$, arme en main), braquage du marché de Noodle Row par <code>rp_crime</code> (375 €$).</dd>
+</dl>
+<p class="goal"><code>/goal construire rp_shops v2 via le MCP : boutiques placées avec PNJ vendeur parlant (supérette, armurerie avec permis, vêtements via wardrobe, pharmacie, marché noir nocturne), stock de société, config des prix ; déployer et tester en jeu avec moi</code></p></div>
+
+<div class="script"><header><h3>rp_zones</h3><span class="pill done">livrée · 18 sept</span><span class="meta">S</span></header>
+<dl>
+<dt>Rôle</dt><dd>Zones nommées avec annonce à l'entrée : safe zones (pas de dégâts, armes rangées via <code>input-blocking</code>), commissariat, hôpital, Badlands (radio « hors couverture »), camp nomade, casse, territoires de gang (phase 4), zones de vente illégale. Export <code>zoneOf(playerId)</code> et événement <code>rp_zones:entered/left</code> consommés par tous les métiers.</dd>
+<dt>Intègre</dt><dd><code>polyzone</code>, <code>open77_zones</code>, <code>open77_worldui</code>, <code>input-blocking</code>.</dd>
+<dt>Livré</dt><dd>Onze zones sur le vrai Night City (points marchés et intérieurs AMM) : <code>kabuki_market</code> (safe, le spawn), <code>kabuki</code> (district), <code>afterlife</code> (r 50), <code>lizzies</code>, <code>h10</code>, <code>viktor_clinic</code>, <code>ncpd_hq</code>, <code>junkyard</code>, <code>nomad_camp</code>, <code>westbrook_dealer</code>, <code>badlands</code> (polygone à l'est de x 900 : le rayon d'une zone est plafonné à 2 000 m) ; toasts d'entrée, « Out of NCPD coverage » en Badlands, safe zone par arbitre <code>Open77.combat.onDamage</code>, pins de carte + anneaux, exports <code>zoneOf isIn list playersIn</code>, événements <code>rp_zones:entered/left</code>. Pas de SQL (état transitoire). Joué le 18 sept : /zone dans kabuki_market puis dans ncpd_hq.</dd>
+</dl>
+<p class="goal"><code>/goal construire rp_zones via le MCP : zones nommées avec annonce, safe zones, Badlands, camp, casse, commissariat, hôpital, export zoneOf et événements ; déployer et tester en jeu avec moi</code></p></div>
+
+<h2>Phase 4 — Immersion, outils et vie criminelle <span class="pill done">livrée le 18 septembre</span></h2>
+
+<div class="script"><header><h3>rp_hud</h3><span class="pill done">livrée · 18 sept</span><span class="meta">M</span></header>
+<dl>
+<dt>Rôle</dt><dd>HUD WebUI discret : liquide, banque, métier/grade/service, faim/soif/fatigue, heure serveur (<code>open77_weather</code>), id, zone courante ; se cache en photo mode et en cinématique (<code>uikit cinematicState</code>).</dd>
+<dt>Intègre</dt><dd>WebUI, <code>hud-visibility</code>, événements <code>rp_economy:changed rp_jobs:changed rp_needs:changed rp_zones:entered</code>.</dd>
+<dt>Livré</dt><dd>HUD WebUI (<code>/interface</code> pour le masquer) : nom RP + id, liquide, compte, métier/grade/service, faim/soif/fatigue, zone courante + type, heure serveur et météo ; alimenté par <code>rp_economy:changed</code>, <code>rp_bank:changed</code>, <code>rp_jobs:changed/duty</code>, <code>rp_needs:changed</code>, <code>rp_zones:entered</code>, <code>rp_identity:changed</code>. Joué le 18 sept : visible sur toutes les captures ; remonté à 260 px pour ne plus couvrir les widgets santé/arme vanilla.</dd>
+</dl>
+<p class="goal"><code>/goal construire rp_hud via le MCP : HUD WebUI liquide/banque/métier/besoins/heure/zone alimenté par les événements rp_* ; déployer et tester en jeu avec moi</code></p></div>
+
+<div class="script"><header><h3>rp_phone</h3><span class="pill done">livrée · 18 sept</span><span class="meta">L · SQL</span></header>
+<dl>
+<dt>Rôle</dt><dd>Holophone (objet d'inventaire, animation <code>phone</code>) : contacts, SMS persistants, appels vocaux en canal privé (<code>open77_voice</code>), annuaire des services (NCPD → <code>rp_ncpd:alert</code>, Trauma → <code>rp_trauma</code>, Delamain → <code>rp_delamain</code>, mécano), partage de position, petites annonces.</dd>
+<dt>Intègre</dt><dd>WebUI, <code>open77_voice</code>, <code>rp_inventory</code>, exports des métiers, SQL.</dd>
+<dt>Livré</dt><dd><code>/tel</code> (WebUI : contacts, SMS, annonces), <code>/sms &lt;numéro|id&gt; &lt;texte&gt;</code>, <code>/contacts</code>, <code>/annonce</code> ; numéro attribué à la première connexion (555-0001…), objet <code>phone</code> de l'inventaire requis. Tables <code>rp_phone_lines/contacts/sms/ads</code> ; exports <code>numberOf sms contactsOf broadcast</code>. Joué le 18 sept : numéro 555-0001 attribué, téléphone ouvert, annonce. SMS entre joueurs = second joueur.</dd>
+</dl>
+<p class="goal"><code>/goal construire rp_phone via le MCP : holophone WebUI avec contacts, SMS persistants, appels voix privés, annuaire des services relié aux métiers, partage de position ; déployer et tester en jeu avec moi</code></p></div>
+
+<div class="script"><header><h3>rp_radio</h3><span class="pill done">livrée · 18 sept</span><span class="meta">S</span></header>
+<dl>
+<dt>Rôle</dt><dd>Radio (objet) : fréquences libres, canaux réservés NCPD/Trauma/mécano/nomades par métier en service, PTT radio distinct de la voix de proximité, brouillable par le netrunner, coupée dans les Badlands (zone).</dd>
+<dt>Intègre</dt><dd><code>open77_voice</code> (canaux serveur, <code>setChannelVolume</code>), <code>keybindings</code>, <code>rp_jobs</code> v2, <code>rp_zones</code>.</dd>
+<dt>Livré</dt><dd><code>/radio &lt;fréquence&gt;</code>, <code>/radio dire &lt;texte&gt;</code>, <code>/radio off</code> ; canaux par fréquence (87.5–108.0), objet <code>radio</code> requis, fréquence mémorisée en SQL (<code>rp_radio_tuning</code>), brouillage par <code>rp_netrunner:jammed</code> (texte brouillé + parasites), export <code>channelOf</code>. Joué le 18 sept : <code>/radio 95.5</code>, message relayé sur le canal, fréquence relue après reconnexion.</dd>
+</dl>
+<p class="goal"><code>/goal construire rp_radio via le MCP : fréquences radio sur open77_voice, canaux réservés par métier en service, PTT dédié, brouillage et zones sans couverture ; déployer et tester en jeu avec moi</code></p></div>
+
+<div class="script"><header><h3>rp_mdt</h3><span class="pill done">livrée · 18 sept</span><span class="meta">M</span></header>
+<dl>
+<dt>Rôle</dt><dd>Tablette NCPD/Trauma (WebUI) : recherche citoyen (identité, casier, véhicules, mandats, contrat Trauma), rapports, amendes impayées, dossier médical, traces de hacking (rp_logs).</dd>
+<dt>Intègre</dt><dd>WebUI, SQL, exports <code>rp_identity rp_garage rp_ncpd rp_trauma rp_logs</code>.</dd>
+<dt>Livré</dt><dd><code>/mdt</code>, <code>/mdt fermer</code> ; tablette WebUI NCPD (citoyens, véhicules, rapports, dispatch, traces réseau) ou Trauma (citoyens, médical, rapports, 911), mode choisi par le serveur d'après <code>rp_jobs</code> + service. Table <code>rp_mdt_reports</code> ; écrit par <code>rp_ncpd:setWanted/addRecord</code>, <code>rp_garage:setWanted</code>, <code>rp_logs:log</code>. Joué le 18 sept : ouverture en boss NCPD en service, recherche « Vince » → fiche (identité, mandat, amendes, casier, véhicules, contrat Trauma), ajout d'une entrée au casier (ligne <code>rp_ncpd_records</code> en SQL).</dd>
+</dl>
+<p class="goal"><code>/goal construire rp_mdt via le MCP : tablette WebUI NCPD/Trauma sur identité, casier, véhicules, mandats, rapports, amendes, dossier médical, traces de hacking ; déployer et tester en jeu avec moi</code></p></div>
+
+<div class="script"><header><h3>rp_gangs — territoires et vie criminelle</h3><span class="pill done">livrée · 18 sept</span><span class="meta">L · SQL</span></header>
+<dl>
+<dt>Rôle</dt><dd>Le métier <code>gang</code> (Maelstrom, Tyger Claws, Valentinos, 6th Street, Animals, Voodoo Boys, Scavs) : territoires = zones avec influence, gagnée par la vente de drogue et les gigs, perdue sur arrestation ; planques (housing), tenue/couleurs, vol à la tire et braquage de joueur (contextmenu, cible menottée ou mains en l'air <code>handsup</code>), guerre de territoire déclarée entre patrons avec capture de zone chronométrée. Tout butin en liquide.</dd>
+<dt>Intègre</dt><dd><code>rp_zones</code>, <code>open77_rp_basics</code>, <code>open77_contextmenu</code>, animations <code>handsup</code>, <code>rp_inventory</code>, <code>rp_economy</code>, <code>rp_housing</code>, SQL.</dd>
+<dt>Livré</dt><dd><code>/gang creer|inviter|quitter|infos|vendre</code>, <code>/territoire</code>, <code>/racket</code>, <code>/guerre</code>, <code>/setgang</code> (admin) ; territoires sur les zones <code>rp_zones</code>, influence par deals, tribut périodique, guerre de territoire chronométrée, acheteur PNJ par territoire (Far Corner de Kabuki Market, l'intérieur de Lizzie's, la casse ; l'Afterlife se dispute sans acheteur). Tables <code>rp_gangs_members</code>, <code>rp_gangs_influence</code> ; exports <code>gangOf rankOf isBoss influence addInfluence</code>. Joué le 18 sept : <code>/gang creer maelstrom</code>, <code>/gang vendre</code> à l'acheteur du territoire (+1 influence), tribut +50 €$ reçu. Guerre et racket = second joueur.</dd>
+</dl>
+<p class="goal"><code>/goal construire rp_gangs via le MCP : gangs de Night City avec territoires en zones et influence, vol à la tire et braquage de joueur par contextmenu, planques, guerres de territoire chronométrées ; déployer et tester en jeu avec moi</code></p></div>
+
+<div class="script"><header><h3>rp_crime — braquages, vols, contrebande</h3><span class="pill done">livrée · 18 sept</span><span class="meta">M</span></header>
+<dl>
+<dt>Rôle</dt><dd>Donne du travail au NCPD : braquage de supérette (PNJ vendeur mains en l'air, minuterie, alerte <code>rp_ncpd:alert</code> avec blip, butin liquide), vol de véhicule verrouillé (crochet + progress, alerte, la voiture devient « recherchée » via <code>rp_garage</code>), vente de drogue en zone (rp_gangs), convoyage de contrebande Badlands → ville (vol des caisses nomades), recel au ferrailleur la nuit.</dd>
+<dt>Intègre</dt><dd><code>open77_npcs</code>, <code>open77_uikit progress</code>, <code>rp_zones</code>, <code>open77_blips</code>, <code>open77_vehicles</code>, <code>rp_garage</code>, <code>rp_ncpd</code>, <code>rp_nomade</code>.</dd>
+<dt>Livré</dt><dd><code>/braquer</code> (arme sortie, 20 s, alerte + casier NCPD, <code>rp_shops:rob</code>), <code>/crocheter</code> (crochet, 12 s, véhicule verrouillé d'autrui, plaque WANTED + APB NCPD), <code>/dealer &lt;id&gt;</code> (consentement <code>playerInteractions</code>, influence gang), <code>/voler</code> (caisse nomade), <code>/receler</code> (Vik the Fence, 22 h–6 h, à la casse de Rancho Coronado <code>1381, -1668</code> entre deux caisses cargo). Table <code>rp_crime_log</code> ; export <code>wantedVehicles</code>, événement <code>rp_crime:robbery</code>. Joué le 18 sept : recel de 2 pièces volées (600 €$), crochetage d'une Archer Hella verrouillée (alerte NCPD), braquage du marché de Noodle Row (375 €$, casier) ; les cinq boutiques braquables sont les stands de <code>rp_shops</code>. <code>/dealer</code> et <code>/voler</code> = second joueur.</dd>
+</dl>
+<p class="goal"><code>/goal construire rp_crime via le MCP : braquage de supérette avec PNJ et alerte NCPD, vol de véhicule verrouillé par crochetage, vente en zone, vol de cargaison nomade, recel nocturne ; déployer et tester en jeu avec moi</code></p></div>
+
+<div class="script"><header><h3>rp_ambiance</h3><span class="pill done">livrée · 18 sept</span><span class="meta">S</span></header>
+<dl>
+<dt>Rôle</dt><dd>Réglage de <code>open77_weather</code> (cycle jour réel = 3 h, météo pondérée, Badlands plus chaud), figurants parlants aux lieux clés (bars, marché, commissariat) avec <code>npcs wander</code> + <code>speak</code>, panneaux d'annonces serveur (<code>open77_notifications</code>), sirènes et VFX d'événements (<code>open77_effects</code>), musique d'ambiance par zone (<code>open77_sound</code>).</dd>
+<dt>Livré</dt><dd>Cycle jour/nuit (3 h réelles par jour, aligné sur le taux moteur), météo tirée toutes les 12–24 min, figurants PNJ par zone (10 en 4 zones : Kabuki Market, l'Afterlife, Lizzie's, la casse ; boucles sonores dans les deux bars), annonces radio/NCPD périodiques, console <code>ambiance reload</code> ; 8 réglages surchargeables par <code>rp_config</code>. Joué le 18 sept : cycle et météo visibles, figurants sur Kabuki Market, surcharge <code>rp_ambiance.realHoursPerDay</code> appliquée puis retirée.</dd>
+</dl>
+<p class="goal"><code>/goal construire rp_ambiance via le MCP : configuration de open77_weather, figurants PNJ parlants aux lieux clés, annonces serveur, musique et effets par zone ; déployer et tester en jeu avec moi</code></p></div>
+
+<h2>Phase 5 — Administration et exploitation <span class="pill done">livrée le 18 septembre</span></h2>
+
+<div class="script"><header><h3>rp_admin</h3><span class="pill done">livrée · 18 sept</span><span class="meta">M</span></header>
+<dl>
+<dt>Rôle</dt><dd>Extension du menu admin : <code>/setjob /setgrade /setmoney /setbank /giveitem /warn /freeze /spectate /revive</code> (RP), mode admin visible dans les plaques, tickets <code>/report</code> avec file et prise en charge, restriction de <code>/car /goto /tpc /revive</code> du freeroam aux admins ; tout journalisé.</dd>
+<dt>Intègre</dt><dd><code>open77_admin</code> (ACL <code>command.*</code>), <code>warden-players</code>, exports de tous les <code>rp_*</code>.</dd>
+<dt>Livré</dt><dd><code>/rpadmin</code> (menu), <code>/warn</code>, <code>/freeze</code>, <code>/spectate</code>, <code>/setmoney</code>, <code>/setbank</code>, <code>/setgrade</code>, <code>/report &lt;texte&gt;</code>, <code>/tickets</code> ; ACL <code>command.rpadmin</code>, journal des actions et tickets en SQL (<code>rp_admin_actions</code>, <code>rp_admin_tickets</code>), événement <code>rp_admin:action</code> repris par <code>rp_logs</code> ; exports <code>isAdmin notify</code>. Joué le 18 sept : <code>warn</code> depuis la console (2 lignes SQL, joueur averti), tickets. Freeze/spectate sur un tiers = owner.</dd>
+</dl>
+<p class="goal"><code>/goal construire rp_admin via le MCP : commandes admin RP sur métiers, argent, inventaire, avertissements, spectate, tickets, restriction des commandes freeroam ; déployer et tester en jeu avec moi</code></p></div>
+
+<div class="script"><header><h3>rp_logs</h3><span class="pill done">livrée · 18 sept</span><span class="meta">S · SQL</span></header>
+<dl>
+<dt>Rôle</dt><dd>Audit : abonne tous les <code>rp_*:changed/alert/arrest</code>, achats, morts, commandes admin, traces de hacking ; SQL + webhook Discord pour les événements sensibles (secret dans l'environnement, jamais dans la ressource). Export <code>query(filter)</code> pour le MDT.</dd>
+<dt>Livré</dt><dd>Audit SQL de tous les événements <code>rp_*</code> (économie, banque, inventaire, métiers, zones, NCPD, morts, admin, start/stop), <code>/logs [n] [filtre]</code>, export <code>log</code> et <code>query(filter)</code> pour le MDT, webhook Discord optionnel lu dans l'environnement (jamais dans la ressource). Table <code>rp_logs_events</code>. Joué le 18 sept : 51+ événements relus depuis SQL après restart ; correctif : un acteur console (id 0) faisait planter la VM (<code>Open77.players.identifier(0)</code> lève), gardé.</dd>
+</dl>
+<p class="goal"><code>/goal construire rp_logs via le MCP : audit SQL de tous les événements rp_* et relais Discord des événements sensibles, export query pour le MDT ; déployer et tester avec moi</code></p></div>
+
+<div class="script"><header><h3>rp_whitelist</h3><span class="pill done">livrée · 18 sept</span><span class="meta">S · SQL</span></header>
+<dl>
+<dt>Rôle</dt><dd>Contrôle à la connexion (<code>onPlayerConnecting</code>, deferrals) : whitelist par identité, file d'attente prioritaire, bans temporaires RP avec motif, message de refus, <code>/wl</code> admin.</dd>
+<dt>Livré</dt><dd>Contrôle à la connexion (<code>onPlayerConnecting</code>) : allowlist par identité, bans temporaires/permanents avec motif, message de refus avec lien Discord, file d'attente prioritaire, <code>/wl statut|ajouter|retirer|ban|unban|liste</code>. Tables <code>rp_whitelist_entries</code>, <code>rp_whitelist_bans</code> ; exports <code>isAllowed ban</code>. Joué le 18 sept : <code>wl statut</code>, puis <code>wl ban 2 3 …</code> depuis la console → reconnexion du bot refusée par le serveur (<code>Banned from Night City for 3 min: …</code>), <code>wl unban</code> → reconnexion acceptée. Allowlist activée = à jouer par l'owner.</dd>
+</dl>
+<p class="goal"><code>/goal construire rp_whitelist via le MCP : whitelist et file d'attente prioritaire à la connexion, bans temporaires, gestion admin ; déployer et tester avec moi</code></p></div>
+
+<div class="script"><header><h3>rp_config</h3><span class="pill done">livrée · 18 sept</span><span class="meta">S</span></header>
+<dl>
+<dt>Rôle</dt><dd>Un fichier de réglages (prix, paies, loyers, fréquences, cycle, zones, positions des POI) exposé par export <code>get(key)</code>, rechargeable à chaud ; migration des constantes des <code>rp_*</code>. À faire en dernier.</dd>
+<dt>Livré</dt><dd><code>/config get|set|unset|list|reload|export</code> (ACL <code>command.config</code>, console) ; catalogue de 706 clés / 29 sections (prix, paies, loyers, fréquences, cycle, zones, POI), typage par la valeur par défaut, surcharges en SQL (<code>rp_config_values</code>) avec repli KVP, rechargement à chaud, événements <code>rp_config:changed/reloaded</code> ; exports <code>get set unset reload all</code>, lus en <code>pcall</code> par <code>rp_ambiance</code>, <code>rp_radio</code>, <code>rp_crime</code> (guide de migration pour les autres). Joué le 18 sept : set/get/refus de type/branche/list/export, surcharge appliquée par <code>ambiance reload</code>, unset.</dd>
+</dl>
+<p class="goal"><code>/goal construire rp_config via le MCP : config centrale rechargeable à chaud exposée par export, migrer les constantes des ressources rp_* ; déployer et vérifier que tout redémarre</code></p></div>
+
+<h2>Ordre de construction</h2>
+<ol class="order">
+<li><b>Prérequis</b> : MySQL sur le serveur d'eval (guide « Configure a SQL database ») ; sans lui, la phase 1 retombe sur le KVP.</li>
+<li>rp_identity → rp_inventory → rp_bank → rp_needs</li>
+<li>rp_jobs v2 → rp_zones (petit, débloque tout le terrain) → rp_ncpd → rp_trauma → rp_delamain → rp_mecano → rp_ferrailleur → rp_nomade → rp_bar → rp_ripperdoc → rp_fixer → rp_netrunner → rp_vigile</li>
+<li>rp_garage → rp_shops v2 → rp_housing</li>
+<li>rp_hud → rp_radio → rp_phone → rp_mdt → rp_gangs → rp_crime → rp_ambiance</li>
+<li>rp_admin → rp_logs → rp_whitelist → rp_config</li>
+</ol>
+<p class="lede">Chaque <code>/goal</code> ci-dessus lance la même boucle : agent MCP-only → validation → déploiement sur le serveur d'eval → test en jeu (toi + un client agent si besoin) → corrections → fiche marquée <span class="pill done">livrée</span> ici. Les trouvailles sur la plateforme (comme le routage IA) remontent dans base au fil de l'eau.</p>
+</main>

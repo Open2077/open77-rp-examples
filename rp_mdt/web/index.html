@@ -1,0 +1,381 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>rp_mdt</title>
+<style>
+  :root {
+    --w: 900px; --h: 600px;
+    --accent: #3aa0ff; --accent-dim: rgba(58,160,255,.18); --accent-line: rgba(58,160,255,.55);
+    --bg: #0b1017; --bg2: #101823; --bg3: #16212e; --fg: #e6eef5; --muted: #8ea0b3; --ok: #3fd18a; --bad: #ff5a6a; --warn: #ffb547;
+  }
+  html, body { margin: 0; height: 100%; background: transparent; color: var(--fg); font: 13px/1.45 "Segoe UI", system-ui, sans-serif; }
+  * { box-sizing: border-box; }
+  #mdt { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+  #mdt.hidden { display: none; }
+  .scrim { position: absolute; inset: 0; background: rgba(0,0,0,.35); }
+  .panel {
+    position: relative; width: var(--w); height: var(--h); display: flex; flex-direction: column;
+    background: linear-gradient(160deg, var(--bg2), var(--bg));
+    border: 1px solid var(--accent-line); box-shadow: 0 0 0 1px rgba(0,0,0,.6), 0 0 40px var(--accent-dim), inset 0 0 60px rgba(0,0,0,.35);
+    overflow: hidden;
+  }
+  .panel::before { content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, transparent 1px 3px); }
+  header { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-bottom: 1px solid var(--accent-line); background: rgba(0,0,0,.25); }
+  header .logo { width: 30px; height: 30px; border: 2px solid var(--accent); display: grid; place-items: center; font-weight: 800; color: var(--accent); letter-spacing: 1px; }
+  header h1 { margin: 0; font-size: 15px; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); }
+  header .who { margin-left: auto; color: var(--muted); font-size: 12px; text-align: right; }
+  header .who b { color: var(--fg); }
+  header .close { width: 30px; height: 30px; border: 1px solid var(--accent-line); background: transparent; color: var(--fg); cursor: pointer; font-size: 16px; }
+  header .close:hover { background: var(--accent-dim); }
+  nav { display: flex; gap: 2px; padding: 8px 12px 0; border-bottom: 1px solid rgba(255,255,255,.08); }
+  nav button { background: transparent; border: 1px solid transparent; border-bottom: 0; color: var(--muted); padding: 8px 14px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; font-size: 11px; }
+  nav button.active { color: var(--accent); border-color: var(--accent-line); background: var(--accent-dim); }
+  main { flex: 1; overflow: auto; padding: 14px 16px; }
+  main::-webkit-scrollbar { width: 8px; } main::-webkit-scrollbar-thumb { background: var(--accent-line); }
+  h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: var(--accent); margin: 14px 0 6px; border-bottom: 1px solid rgba(255,255,255,.08); padding-bottom: 3px; }
+  h2:first-child { margin-top: 0; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  input, select, textarea { background: var(--bg3); border: 1px solid rgba(255,255,255,.14); color: var(--fg); padding: 7px 9px; font: inherit; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+  textarea { width: 100%; min-height: 70px; resize: vertical; }
+  button.btn { background: var(--accent-dim); border: 1px solid var(--accent-line); color: var(--fg); padding: 7px 12px; cursor: pointer; font: inherit; text-transform: uppercase; letter-spacing: 1px; font-size: 11px; }
+  button.btn:hover { background: var(--accent); color: #000; }
+  button.btn.danger { border-color: var(--bad); } button.btn.danger:hover { background: var(--bad); }
+  button.btn.ghost { border-color: rgba(255,255,255,.2); background: transparent; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { text-align: left; color: var(--muted); font-weight: 600; padding: 4px 6px; border-bottom: 1px solid rgba(255,255,255,.1); text-transform: uppercase; font-size: 10px; letter-spacing: 1px; }
+  td { padding: 5px 6px; border-bottom: 1px solid rgba(255,255,255,.05); vertical-align: top; }
+  tr.click { cursor: pointer; } tr.click:hover td { background: var(--accent-dim); }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; }
+  .kv { display: flex; gap: 8px; } .kv span:first-child { color: var(--muted); min-width: 90px; }
+  .badge { display: inline-block; padding: 1px 7px; border: 1px solid; border-radius: 2px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+  .badge.ok { color: var(--ok); border-color: var(--ok); } .badge.bad { color: var(--bad); border-color: var(--bad); }
+  .badge.warn { color: var(--warn); border-color: var(--warn); } .badge.dim { color: var(--muted); border-color: var(--muted); }
+  .muted { color: var(--muted); } .bad { color: var(--bad); } .ok { color: var(--ok); }
+  .empty { color: var(--muted); font-style: italic; padding: 6px 0; }
+  .card-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 4px; }
+  .card-head .name { font-size: 18px; font-weight: 700; }
+  .toasts { position: absolute; right: 14px; bottom: 14px; display: flex; flex-direction: column; gap: 6px; pointer-events: none; }
+  .toast { background: rgba(0,0,0,.85); border-left: 3px solid var(--ok); padding: 8px 12px; max-width: 420px; font-size: 12px; }
+  .toast.bad { border-left-color: var(--bad); }
+  .pre { white-space: pre-wrap; background: var(--bg3); padding: 10px; border: 1px solid rgba(255,255,255,.08); }
+  footer { padding: 4px 16px; font-size: 10px; color: var(--muted); border-top: 1px solid rgba(255,255,255,.08); display: flex; justify-content: space-between; }
+</style>
+
+<div id="mdt" class="hidden">
+  <div class="scrim"></div>
+  <div class="panel">
+    <header>
+      <div class="logo" id="logo">NC</div>
+      <h1 id="title">MOBILE DATA TERMINAL</h1>
+      <div class="who" id="who"></div>
+      <button class="close" id="btnClose" title="Close (Esc)">&times;</button>
+    </header>
+    <nav id="tabs"></nav>
+    <main id="main"></main>
+    <footer><span id="footLeft">Night City // secure link</span><span id="footRight"></span></footer>
+    <div class="toasts" id="toasts"></div>
+  </div>
+</div>
+
+<script>
+  // window.Open77 is the page bridge: Open77.on(event, handler) receives what the
+  // client script sends with page:send(event, payload); Open77.emit(event, payload)
+  // raises an event the client script handles with page:on(). Nothing here talks to
+  // the network or decides anything: every action is an "intent" the server answers.
+  const bridge = window.Open77;
+  const TAB_LABELS = { citizens: "Citizens", vehicles: "Vehicles", reports: "Reports", dispatch: "Dispatch", medical: "Medical", nettrace: "Net traces" };
+  const S = { open: false, mode: null, tabs: [], tab: null, officer: null, store: "?",
+              citizens: { query: "", results: null, card: null, source: null },
+              vehicles: { query: "", results: null, source: null },
+              reports: { query: "", rows: null, source: null, current: null },
+              dispatch: { rows: null }, medical: null, nettrace: { rows: null, source: null } };
+
+  const $ = (id) => document.getElementById(id);
+  const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  function emit(name, payload) { if (bridge && typeof bridge.emit === "function") bridge.emit(name, payload || {}); }
+  function intent(action, extra) { emit("intent", Object.assign({ action: action }, extra || {})); }
+
+  function fmtAt(v) {
+    if (v == null || v === "") return "-";
+    if (typeof v === "string" && !/^\d+(\.\d+)?$/.test(v)) return v;
+    let n = Number(v); if (!isFinite(n)) return String(v);
+    if (n < 1e12) n *= 1000;
+    const d = new Date(n), p = (x) => String(x).padStart(2, "0");
+    return `${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())}`;
+  }
+  const money = (n) => `${Number(n || 0).toLocaleString("en-US")} €$`;
+  const srcNote = (src, what) => (src === "export" || src === "sql" || src === "kvp") ? "" : `<div class="bad">${esc(what)} offline${src ? " (" + esc(src) + ")" : ""}.</div>`;
+
+  function toast(text, ok) {
+    const el = document.createElement("div"); el.className = "toast" + (ok ? "" : " bad"); el.textContent = text;
+    $("toasts").appendChild(el); setTimeout(() => el.remove(), 5000);
+  }
+
+  // ---- open / close --------------------------------------------------------
+  function onOpen(p) {
+    S.open = true; S.mode = p.mode; S.tabs = p.tabs || []; S.officer = p.officer || {}; S.store = p.store || "?";
+    S.citizens = { query: "", results: null, card: null, source: null };
+    S.vehicles = { query: "", results: null, source: null };
+    S.reports = { query: "", rows: null, source: null, current: null };
+    S.dispatch = { rows: null }; S.medical = null; S.nettrace = { rows: null, source: null };
+    const root = document.documentElement.style;
+    if (p.panel) { root.setProperty("--w", p.panel.width + "px"); root.setProperty("--h", p.panel.height + "px"); }
+    const trauma = p.mode === "trauma";
+    root.setProperty("--accent", trauma ? "#e53a48" : "#3aa0ff");
+    root.setProperty("--accent-dim", trauma ? "rgba(229,58,72,.18)" : "rgba(58,160,255,.18)");
+    root.setProperty("--accent-line", trauma ? "rgba(229,58,72,.6)" : "rgba(58,160,255,.55)");
+    $("logo").textContent = trauma ? "TT" : "NC";
+    $("title").textContent = p.title || "MOBILE DATA TERMINAL";
+    $("who").innerHTML = `<b>${esc(S.officer.name || "?")}</b><br>${esc(p.label || "")}${S.officer.grade ? " · " + esc(S.officer.grade) : ""} · id ${esc(S.officer.playerId)}`;
+    $("footRight").textContent = "store: " + S.store + " · Esc closes";
+    $("mdt").classList.remove("hidden");
+    selectTab(S.tabs[0] || "citizens");
+  }
+  function onClose() { S.open = false; $("mdt").classList.add("hidden"); }
+
+  function selectTab(tab) {
+    S.tab = tab;
+    $("tabs").innerHTML = S.tabs.map((t) => `<button data-tab="${t}" class="${t === tab ? "active" : ""}">${esc(TAB_LABELS[t] || t)}</button>`).join("");
+    $("tabs").querySelectorAll("button").forEach((b) => b.onclick = () => selectTab(b.dataset.tab));
+    if (tab === "dispatch" && !S.dispatch.rows) intent("dispatch");
+    if (tab === "medical" && !S.medical) intent("medical");
+    if (tab === "nettrace" && !S.nettrace.rows) intent("nettrace");
+    if (tab === "reports" && !S.reports.rows) intent("report_search", { query: "" });
+    render();
+  }
+
+  // ---- data from the server --------------------------------------------------
+  function onData(d) {
+    if (!d || !d.kind) return;
+    switch (d.kind) {
+      case "notice": toast(d.text, d.ok); return;
+      case "citizen_search": S.citizens.results = d.results || []; S.citizens.query = d.query; S.citizens.source = d.registrySource; S.citizens.card = null; break;
+      case "citizen_card": S.citizens.card = d.card; S.tab = "citizens"; break;
+      case "vehicle_search": S.vehicles.results = d.results || []; S.vehicles.query = d.query; S.vehicles.source = d.source; break;
+      case "reports": S.reports.rows = d.rows || []; S.reports.query = d.query || ""; S.reports.source = d.source; S.reports.current = null; break;
+      case "report": S.reports.current = d.report; S.tab = "reports"; break;
+      case "dispatch": S.dispatch.rows = d.rows || []; break;
+      case "medical": S.medical = d.data; break;
+      case "nettrace": S.nettrace.rows = d.rows || []; S.nettrace.source = d.source; break;
+    }
+    if (S.tabs.indexOf(S.tab) < 0) S.tab = S.tabs[0];
+    selectTabQuiet(S.tab);
+  }
+  function selectTabQuiet(tab) {
+    S.tab = tab;
+    $("tabs").querySelectorAll("button").forEach((b) => b.classList.toggle("active", b.dataset.tab === tab));
+    render();
+  }
+
+  // ---- rendering ---------------------------------------------------------------
+  function render() {
+    const m = $("main");
+    const r = { citizens: renderCitizens, vehicles: renderVehicles, reports: renderReports, dispatch: renderDispatch, medical: renderMedical, nettrace: renderNettrace }[S.tab];
+    m.innerHTML = r ? r() : "";
+    bind(m);
+  }
+
+  function bind(root) {
+    root.querySelectorAll("[data-intent]").forEach((el) => {
+      el.onclick = (ev) => {
+        ev.preventDefault();
+        const action = el.dataset.intent;
+        const extra = {};
+        // dataset keys are lower-cased by the DOM: map the ones the server spells in camelCase.
+        const KEYS = { targetidentifier: "targetIdentifier" };
+        Object.keys(el.dataset).forEach((k) => { if (k !== "intent" && k !== "from") extra[KEYS[k] || k] = el.dataset[k]; });
+        if (el.dataset.from) {
+          const form = root.querySelector("#" + el.dataset.from);
+          form.querySelectorAll("[name]").forEach((f) => extra[f.name] = f.type === "checkbox" ? f.checked : f.value);
+        }
+        if (extra.stolen !== undefined) extra.stolen = (extra.stolen === true || extra.stolen === "true");
+        if (extra.level !== undefined) extra.level = Number(extra.level);
+        intent(action, extra);
+      };
+    });
+    root.querySelectorAll("input[data-enter]").forEach((inp) => {
+      inp.onkeydown = (ev) => { if (ev.key === "Enter") { ev.preventDefault(); root.querySelector("#" + inp.dataset.enter).click(); } };
+    });
+    root.querySelectorAll("[data-local]").forEach((el) => {
+      el.onclick = () => {
+        if (el.dataset.local === "back") { S.citizens.card = null; render(); }
+        if (el.dataset.local === "reportBack") { S.reports.current = null; render(); }
+      };
+    });
+    const first = root.querySelector("input[autofocus]"); if (first) first.focus();
+  }
+
+  function renderCitizens() {
+    const c = S.citizens;
+    if (c.card) return renderCard(c.card);
+    let h = `<h2>Citizen lookup</h2>
+      <form id="fCit" class="row" onsubmit="return false">
+        <input name="query" placeholder="Name or citizen id (#1)" value="${esc(c.query)}" data-enter="bCit" autofocus style="flex:1">
+        <button class="btn" id="bCit" data-intent="citizen_search" data-from="fCit">Search</button>
+      </form>`;
+    if (c.results) {
+      h += srcNote(c.source, "Civil registry (offline citizens)");
+      if (!c.results.length) h += `<div class="empty">No citizen matches "${esc(c.query)}".</div>`;
+      else h += `<table><tr><th>NCID</th><th>Name</th><th>Status</th><th>Session</th></tr>` + c.results.map((r) => `
+        <tr class="click" data-intent="citizen_card" data-identifier="${esc(r.identifier)}">
+          <td>${r.citizenId != null ? "#" + esc(r.citizenId) : "-"}</td><td>${esc(r.name)}</td>
+          <td>${r.online ? '<span class="badge ok">online</span>' : '<span class="badge dim">offline</span>'} ${r.registered === false ? '<span class="badge warn">unregistered</span>' : ""}</td>
+          <td>${r.playerId != null ? "id " + esc(r.playerId) : "-"}</td></tr>`).join("") + `</table>`;
+    } else h += `<div class="empty">Search a citizen by name or NCID. Connected players answer at once; the civil registry covers everybody else.</div>`;
+    return h;
+  }
+
+  function renderCard(k) {
+    const ncpd = k.mode === "ncpd";
+    let h = `<div class="row"><button class="btn ghost" data-local="back">&larr; Results</button><button class="btn ghost" data-intent="citizen_card" data-identifier="${esc(k.identifier)}">Refresh</button></div>
+      <div class="card-head"><span class="name">${esc(k.name)}</span>${k.citizenId != null ? `<span class="muted">NCID #${esc(k.citizenId)}</span>` : ""}
+        ${k.online ? `<span class="badge ok">online · id ${esc(k.playerId)}</span>` : '<span class="badge dim">offline</span>'}
+        ${k.registered === false ? '<span class="badge warn">no citizen record</span>' : ""}
+        ${k.down ? '<span class="badge bad">DOWN</span>' : ""}</div>
+      <h2>Identity</h2>${srcNote(k.identitySource, "Civil registry")}
+      <div class="grid">
+        <div class="kv"><span>Born</span><span>${esc(k.birth || "-")}</span></div><div class="kv"><span>Sex</span><span>${esc(k.sex || "-")}</span></div>
+        <div class="kv"><span>Origin</span><span>${esc(k.origin || "-")}</span></div><div class="kv"><span>Account</span><span>${esc(k.accountName || "-")}</span></div>
+        <div class="kv"><span>Identifier</span><span class="muted">${esc(k.short)}..</span></div>
+        <div class="kv"><span>Trauma Team</span><span>${k.contract == null ? '<span class="muted">unknown</span>' : (k.contract ? '<span class="ok">contract holder</span>' : "no contract")}${srcNote(k.contractSource, " Trauma registry")}</span></div>
+      </div>`;
+    if (ncpd) {
+      h += `<h2>Warrant</h2>${srcNote(k.warrantSource, "NCPD registry")}`;
+      if (k.warrant) h += `<div><span class="badge bad">WANTED L${esc(k.warrant.level)}</span> ${esc(k.warrant.reason || "")} ${k.warrant.officer ? `<span class="muted">· ${esc(k.warrant.officer)}</span>` : ""}
+        <button class="btn danger" style="margin-left:10px" data-intent="warrant_lift" data-identifier="${esc(k.identifier)}">Lift warrant</button></div>`;
+      else if (k.warrant === false) h += `<div class="muted">No open warrant.</div>`;
+      h += `<form id="fWar" class="row" style="margin-top:8px" onsubmit="return false">
+        <select name="level">${[1,2,3,4,5].filter((l) => l >= (k.warrantLevels || {minLevel:1}).minLevel && l <= (k.warrantLevels || {maxLevel:5}).maxLevel).map((l) => `<option value="${l}">Level ${l}</option>`).join("")}</select>
+        <input name="reason" placeholder="Reason" maxlength="64" style="flex:1" data-enter="bWar">
+        <button class="btn" id="bWar" data-intent="warrant_set" data-identifier="${esc(k.identifier)}" data-from="fWar">${k.warrant ? "Update warrant" : "Set warrant"}</button></form>
+        ${k.online ? "" : '<div class="muted">Warrants and record entries need the citizen connected (NCPD registry rule).</div>'}`;
+
+      h += `<h2>Unpaid fines${k.finesTotal ? ` · <span class="bad">${money(k.finesTotal)}</span>` : ""}</h2>${srcNote(k.finesSource, "Fine ledger")}`;
+      h += (k.fines && k.fines.length) ? `<table><tr><th>Left</th><th>Amount</th><th>Reason</th><th>Officer</th><th>Date</th></tr>` + k.fines.map((f) => `<tr><td>${money(f.remaining)}</td><td>${money(f.amount)}</td><td>${esc(f.reason)}</td><td>${esc(f.officer || "-")}</td><td>${esc(fmtAt(f.at))}</td></tr>`).join("") + `</table>` : (k.finesSource === "sql" ? `<div class="muted">Nothing owed.</div>` : "");
+
+      h += `<h2>Criminal record</h2>${srcNote(k.recordSource, "NCPD registry")}`;
+      h += (k.record && k.record.length) ? `<table><tr><th>Date</th><th>Kind</th><th>Entry</th><th>Officer</th></tr>` + k.record.map((e) => `<tr><td>${esc(fmtAt(e.at))}</td><td><span class="badge warn">${esc(e.kind)}</span></td><td>${esc(e.text)}</td><td>${esc(e.officer || "-")}</td></tr>`).join("") + `</table>` : (k.record ? `<div class="muted">Clean sheet.</div>` : "");
+      h += `<form id="fRec" class="row" style="margin-top:8px" onsubmit="return false">
+        <select name="kind">${(k.recordKinds || ["report"]).map((x) => `<option value="${esc(x)}">${esc(x)}</option>`).join("")}</select>
+        <input name="text" placeholder="Entry (goes to the NCPD record)" maxlength="240" style="flex:1" data-enter="bRec">
+        <button class="btn" id="bRec" data-intent="record_add" data-identifier="${esc(k.identifier)}" data-from="fRec">Add to record</button></form>`;
+
+      h += `<h2>Vehicles</h2>${srcNote(k.vehiclesSource, "Vehicle registry")}`;
+      h += (k.vehicles && k.vehicles.length) ? `<table><tr><th>Plate</th><th>Model</th><th>State</th><th>Flag</th></tr>` + k.vehicles.map((v) => `<tr><td><b>${esc(v.plate)}</b></td><td>${esc(v.label || "-")}</td><td>${esc(v.state || "-")}</td><td>${v.wanted ? `<span class="badge bad">WANTED</span> ${esc(v.wantedReason || "")}` : '<span class="muted">clean</span>'}</td></tr>`).join("") + `</table>` : (k.vehicles ? `<div class="muted">No registered vehicle.</div>` : "");
+
+      h += `<h2>Gun licence</h2>${srcNote(k.licenceSource, "Licence ledger")}`;
+      if (k.licence) h += `<div><span class="badge ok">licensed</span> issued ${esc(fmtAt(k.licence.at))} (${money(k.licence.fee)})</div>`;
+      else if (k.licence === false) h += `<div class="muted">No NCPD gun licence on file.</div>`;
+    } else {
+      h += `<h2>Unpaid Trauma Team bills${k.billsTotal ? ` · <span class="bad">${money(k.billsTotal)}</span>` : ""}</h2>${srcNote(k.billsSource, "Billing ledger")}`;
+      h += (k.bills && k.bills.length) ? `<table><tr><th>Amount</th><th>Reason</th><th>Date</th></tr>` + k.bills.map((b) => `<tr><td>${money(b.amount)}</td><td>${esc(b.reason)}</td><td>${esc(fmtAt(b.at))}</td></tr>`).join("") + `</table>` : (k.billsSource === "sql" ? `<div class="muted">Nothing owed.</div>` : "");
+    }
+
+    h += `<h2>MDT reports on this citizen</h2>`;
+    h += (k.reports && k.reports.length) ? `<table><tr><th>#</th><th>Title</th><th>Author</th><th>Date</th></tr>` + k.reports.map((r) => `<tr class="click" data-intent="report_get" data-id="${esc(r.id)}"><td>${esc(r.id)}</td><td>${esc(r.title)}</td><td>${esc(r.author_name)}</td><td>${esc(fmtAt(r.at))}</td></tr>`).join("") + `</table>` : `<div class="muted">No report filed.</div>`;
+    h += `<form id="fRep" style="margin-top:8px" onsubmit="return false">
+      <div class="row"><input name="title" placeholder="Report title" maxlength="80" style="flex:1"></div>
+      <textarea name="text" placeholder="What happened, choom?" maxlength="2000" style="margin-top:6px"></textarea>
+      <div class="row" style="margin-top:6px"><button class="btn" data-intent="report_add" data-targetidentifier="${esc(k.identifier)}" data-from="fRep">File report</button></div></form>`;
+    return h;
+  }
+
+  function renderVehicles() {
+    const v = S.vehicles;
+    let h = `<h2>Plate lookup</h2>
+      <form id="fVeh" class="row" onsubmit="return false">
+        <input name="query" placeholder="Plate (NC-XXXX) or owner name" value="${esc(v.query)}" data-enter="bVeh" autofocus style="flex:1">
+        <button class="btn" id="bVeh" data-intent="vehicle_search" data-from="fVeh">Search</button></form>`;
+    if (v.results) {
+      h += srcNote(v.source, "Vehicle registry");
+      if (v.source === "export") h += `<div class="muted">No database: only the vehicles of connected owners are listed.</div>`;
+      if (!v.results.length) h += `<div class="empty">No plate matches "${esc(v.query)}".</div>`;
+      else h += `<table><tr><th>Plate</th><th>Model</th><th>Owner</th><th>State</th><th>Flag</th><th></th></tr>` + v.results.map((r, i) => `
+        <tr><td><b>${esc(r.plate)}</b></td><td>${esc(r.label || r.record || "-")}</td>
+          <td>${esc(r.ownerName || "-")} ${r.ownerOnline ? '<span class="badge ok">online</span>' : ""}${r.owner ? `<br><button class="btn ghost" style="padding:2px 6px;font-size:10px" data-intent="citizen_card" data-identifier="${esc(r.owner)}">file</button>` : ""}</td>
+          <td>${esc(r.state || "-")}${r.impoundReason ? `<br><span class="muted">${esc(r.impoundReason)}</span>` : ""}</td>
+          <td>${r.wanted ? `<span class="badge bad">WANTED</span><br><span class="muted">${esc(r.wantedReason || "")}</span>` : '<span class="muted">clean</span>'}</td>
+          <td>${r.wanted
+            ? `<button class="btn ghost" data-intent="vehicle_flag" data-plate="${esc(r.plate)}" data-stolen="false">Clear</button>`
+            : `<form id="fFlag${i}" class="row" onsubmit="return false"><input name="reason" placeholder="reason" maxlength="64" style="width:110px"><button class="btn danger" data-intent="vehicle_flag" data-plate="${esc(r.plate)}" data-stolen="true" data-from="fFlag${i}">Flag stolen</button></form>`}</td></tr>`).join("") + `</table>`;
+    } else h += `<div class="empty">Search a plate or an owner. Flagging a plate raises an APB to every officer on duty (rp_garage).</div>`;
+    return h;
+  }
+
+  function renderReports() {
+    const r = S.reports;
+    if (r.current) {
+      const c = r.current;
+      return `<div class="row"><button class="btn ghost" data-local="reportBack">&larr; Reports</button>${c.target ? `<button class="btn ghost" data-intent="citizen_card" data-identifier="${esc(c.target)}">Citizen file</button>` : ""}</div>
+        <div class="card-head"><span class="name">#${esc(c.id)} ${esc(c.title)}</span></div>
+        <div class="muted">by ${esc(c.author_name)} · ${esc(fmtAt(c.at))}${c.target_name ? " · about " + esc(c.target_name) : ""}</div>
+        <div class="pre" style="margin-top:10px">${esc(c.text)}</div>`;
+    }
+    let h = `<h2>Reports</h2>
+      <form id="fRs" class="row" onsubmit="return false">
+        <input name="query" placeholder="Search title, text, citizen, author" value="${esc(r.query)}" data-enter="bRs" autofocus style="flex:1">
+        <button class="btn" id="bRs" data-intent="report_search" data-from="fRs">Search</button></form>`;
+    if (r.rows) {
+      h += srcNote(r.source, "Report store");
+      if (r.source === "kvp") h += `<div class="muted">No database: reports live in the resource's kvp store (last 100).</div>`;
+      if (!r.rows.length) h += `<div class="empty">No report${r.query ? ` matches "${esc(r.query)}"` : " yet"}.</div>`;
+      else h += `<table><tr><th>#</th><th>Title</th><th>About</th><th>Author</th><th>Date</th></tr>` + r.rows.map((x) => `
+        <tr class="click" data-intent="report_get" data-id="${esc(x.id)}"><td>${esc(x.id)}</td><td>${esc(x.title)}<br><span class="muted">${esc(x.excerpt || "")}</span></td><td>${esc(x.target_name || "-")}</td><td>${esc(x.author_name)}</td><td>${esc(fmtAt(x.at))}</td></tr>`).join("") + `</table>`;
+    }
+    h += `<h2>New report</h2>
+      <form id="fNew" onsubmit="return false">
+        <div class="row"><input name="title" placeholder="Title" maxlength="80" style="flex:2"><input name="targetName" placeholder="About (citizen name, optional)" maxlength="80" style="flex:1"></div>
+        <textarea name="text" placeholder="Free text. Use the citizen file to attach a report to an NCID." maxlength="2000" style="margin-top:6px"></textarea>
+        <div class="row" style="margin-top:6px"><button class="btn" data-intent="report_add" data-from="fNew">File report</button></div></form>`;
+    return h;
+  }
+
+  function renderDispatch() {
+    const d = S.dispatch;
+    let h = `<div class="row"><h2 style="flex:1">Dispatch · last alerts</h2><button class="btn ghost" data-intent="dispatch">Refresh</button></div>`;
+    if (!d.rows) return h + `<div class="empty">Loading...</div>`;
+    if (!d.rows.length) return h + `<div class="empty">No alert since the tablet service started. Alerts are the rp_ncpd:alert events (robberies, 911 calls...).</div>`;
+    return h + `<table><tr><th>Time</th><th>Kind</th><th>Alert</th><th>By</th><th>Distance</th></tr>` + d.rows.map((a) => `
+      <tr><td>${esc(fmtAt(a.at))}</td><td><span class="badge ${a.kind === "911" ? "warn" : "bad"}">${esc(a.kind)}</span></td><td>${esc(a.text)}${a.x != null ? `<br><span class="muted">${Math.round(a.x)}, ${Math.round(a.y)}</span>` : ""}</td><td>${esc(a.by || "-")}</td><td>${a.distance != null ? esc(a.distance) + " m" : "-"}</td></tr>`).join("") + `</table>`;
+  }
+
+  function renderMedical() {
+    const m = S.medical;
+    let h = `<div class="row"><h2 style="flex:1">Medical board</h2><button class="btn ghost" data-intent="medical">Refresh</button></div>`;
+    if (!m) return h + `<div class="empty">Loading...</div>`;
+    h += `<h2>Down right now</h2>${srcNote(m.traumaSource, "Trauma registry")}`;
+    h += (m.down && m.down.length) ? `<table><tr><th>Patient</th><th>Session</th><th>Distance</th><th></th></tr>` + m.down.map((p) => `<tr><td>${esc(p.name)} ${p.contract ? '<span class="badge ok">contract</span>' : ""}</td><td>id ${esc(p.playerId)}</td><td>${p.distance != null ? esc(p.distance) + " m" : "-"}</td><td class="muted">/reanimer ${esc(p.playerId)}</td></tr>`).join("") + `</table>` : (m.traumaSource === "export" ? `<div class="muted">Nobody is down.</div>` : "");
+    h += `<h2>Contract holders online</h2>`;
+    h += (m.contracts && m.contracts.length) ? m.contracts.map((c) => `<div>${esc(c.name)} <span class="muted">(id ${esc(c.playerId)})</span></div>`).join("") : `<div class="muted">None connected.</div>`;
+    h += `<h2>Unpaid bills</h2>${srcNote(m.billsSource, "Billing ledger")}`;
+    h += (m.bills && m.bills.length) ? `<table><tr><th>Patient</th><th>Amount</th><th>Reason</th><th>Date</th></tr>` + m.bills.map((b) => `<tr class="click" data-intent="citizen_card" data-identifier="${esc(b.identifier)}"><td>${esc(b.name)}</td><td>${money(b.amount)}</td><td>${esc(b.reason)}</td><td>${esc(fmtAt(b.at))}</td></tr>`).join("") + `</table>` : (m.billsSource === "sql" ? `<div class="muted">Everybody paid.</div>` : "");
+    h += `<h2>Last revives (rp_logs)</h2>`;
+    if (m.revivesSource !== "export") h += `<div class="bad">Logs offline.</div>`;
+    else h += (m.revives && m.revives.length) ? `<table><tr><th>Time</th><th>Patient</th><th>Event</th></tr>` + m.revives.map((r) => `<tr><td>${esc(fmtAt(r.at))}</td><td>${esc(r.name || "-")}</td><td>${esc(r.text)}</td></tr>`).join("") + `</table>` : `<div class="muted">No revive in the recent log.</div>`;
+    return h;
+  }
+
+  function renderNettrace() {
+    const n = S.nettrace;
+    let h = `<div class="row"><h2 style="flex:1">Net traces · rp_netrunner events</h2><button class="btn ghost" data-intent="nettrace">Refresh</button></div>`;
+    if (!n.rows) return h + `<div class="empty">Loading...</div>`;
+    if (n.source !== "export") return h + `<div class="bad">Logs offline (rp_logs is not running).</div>`;
+    if (!n.rows.length) return h + `<div class="empty">No NET activity in the recent log.</div>`;
+    return h + `<table><tr><th>Time</th><th>Kind</th><th>Runner</th><th>Trace</th></tr>` + n.rows.map((r) => `<tr><td>${esc(fmtAt(r.at))}</td><td><span class="badge warn">${esc(r.kind)}</span></td><td>${esc(r.name || "-")}</td><td>${esc(r.text)}</td></tr>`).join("") + `</table>`;
+  }
+
+  // ---- wiring ----------------------------------------------------------------------
+  $("btnClose").onclick = () => emit("close");
+  document.addEventListener("keydown", (ev) => { if (ev.key === "Escape" && S.open) { ev.preventDefault(); emit("close"); } });
+  if (bridge && typeof bridge.on === "function") {
+    bridge.on("open", onOpen); bridge.on("close", onClose); bridge.on("data", onData);
+  } else {
+    // Older bridge shape: events arrive as window messages { event, payload }.
+    window.addEventListener("message", (event) => {
+      const data = event.data || {}; const name = data.event || data.name; const payload = data.payload || data;
+      if (name === "open") onOpen(payload); else if (name === "close") onClose(); else if (name === "data") onData(payload);
+    });
+  }
+  emit("ready", {});
+</script>

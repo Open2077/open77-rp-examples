@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>rp_hud</title>
+<style>
+  /* rp_hud: a bottom-left glass panel. Transparent page, no pointer events,
+     no external asset, no library. Everything drawn here comes from the
+     client script (state / clock / visible / config events). */
+  :root {
+    --w: 300px;
+    --cyan: #22e0ec;
+    --cyan-dim: rgba(34, 224, 236, 0.35);
+    --red: #ff3b5c;
+    --amber: #ffb000;
+    --green: #3dff8a;
+    --ink: #e8f6f8;
+    --ink-dim: #86a4aa;
+    --glass: rgba(6, 11, 15, 0.72);
+    --line: rgba(34, 224, 236, 0.22);
+  }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    overflow: hidden;
+    pointer-events: none;
+    user-select: none;
+    font: 12px/1.35 "Cascadia Mono", "Consolas", "JetBrains Mono", "DejaVu Sans Mono", "Courier New", monospace;
+    color: var(--ink);
+  }
+  #panel {
+    position: fixed;
+    left: 24px;
+    bottom: 260px; /* clears the vanilla health + weapon widgets (bottom-left, ~250 px when armed) */
+    width: var(--w);
+    max-width: 320px;
+    box-sizing: border-box;
+    padding: 8px 12px 9px 14px;
+    background: var(--glass);
+    border-left: 2px solid var(--cyan);
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+    box-shadow: 0 0 18px rgba(0, 0, 0, 0.45);
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 180ms ease-out, transform 180ms ease-out;
+  }
+  #panel::after {
+    /* a faint scanline texture */
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 3px);
+    pointer-events: none;
+  }
+  body.boot #panel, body.hidden #panel {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  .row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 0 0 4px 0;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .row:last-child { margin-bottom: 0; }
+  .lbl {
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+  }
+  .val { color: var(--ink); }
+  .ell { overflow: hidden; text-overflow: ellipsis; }
+  .cyan { color: var(--cyan); }
+  .dim { color: var(--ink-dim); }
+
+  /* header: name + id */
+  #name {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    text-shadow: 0 0 6px var(--cyan-dim);
+  }
+  #pid { font-size: 10px; color: var(--ink-dim); }
+
+  /* money */
+  .money { display: flex; gap: 14px; }
+  .money div { display: flex; flex-direction: column; min-width: 0; }
+  .money .val { font-size: 13px; letter-spacing: 0.02em; }
+  .money .val small { font-size: 9px; color: var(--cyan); margin-right: 3px; }
+
+  /* job + duty */
+  #duty {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+  }
+  #duty .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #3a4a4e;
+    box-shadow: none;
+    transition: background 200ms, box-shadow 200ms;
+  }
+  #duty.on { color: var(--green); }
+  #duty.on .dot { background: var(--green); box-shadow: 0 0 8px var(--green); }
+
+  /* needs */
+  .needs { margin: 6px 0 5px 0; }
+  .need {
+    display: grid;
+    grid-template-columns: 56px 1fr 34px;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 3px 0;
+  }
+  .need .pct { text-align: right; font-size: 10px; color: var(--ink-dim); }
+  .bar {
+    position: relative;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.07);
+    overflow: hidden;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 3px 100%, 0 calc(100% - 3px));
+  }
+  .bar .fill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 0%;
+    background: linear-gradient(90deg, rgba(34, 224, 236, 0.55), var(--cyan));
+    transition: width 400ms ease-out, background 200ms;
+  }
+  .need.low .pct { color: var(--red); }
+  .need.low .lbl { color: var(--red); }
+  .need.low .fill {
+    background: linear-gradient(90deg, rgba(255, 59, 92, 0.6), var(--red));
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+
+  /* footer: zone + clock */
+  .footer { border-top: 1px solid var(--line); padding-top: 5px; margin-top: 2px; }
+  #zone { min-width: 0; }
+  #zone .kind {
+    font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--cyan); margin-left: 6px;
+  }
+  #zone .kind:empty { display: none; }
+  #clock { font-size: 13px; letter-spacing: 0.08em; color: var(--ink); }
+  #clock.frozen { color: var(--amber); }
+  #clock.off { color: var(--ink-dim); }
+  #weather { font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-dim); margin-left: 6px; }
+</style>
+</head>
+<body class="boot">
+<div id="panel">
+  <div class="row">
+    <span id="name" class="ell">--</span>
+    <span id="pid">#--</span>
+  </div>
+  <div class="row money">
+    <div><span class="lbl">Cash</span><span class="val"><small>€$</small><span id="cash">--</span></span></div>
+    <div><span class="lbl">Account</span><span class="val"><small>€$</small><span id="account">--</span></span></div>
+  </div>
+  <div class="row">
+    <span class="ell"><span class="lbl">Job</span>&nbsp; <span id="job" class="val">--</span> <span id="grade" class="dim"></span></span>
+    <span id="duty"><span class="dot"></span><span id="dutyText">off duty</span></span>
+  </div>
+  <div class="needs">
+    <div class="need" id="need-hunger"><span class="lbl">Hunger</span><div class="bar"><div class="fill"></div></div><span class="pct">--</span></div>
+    <div class="need" id="need-thirst"><span class="lbl">Thirst</span><div class="bar"><div class="fill"></div></div><span class="pct">--</span></div>
+    <div class="need" id="need-fatigue"><span class="lbl">Fatigue</span><div class="bar"><div class="fill"></div></div><span class="pct">--</span></div>
+  </div>
+  <div class="row footer">
+    <span id="zone" class="ell"><span id="zoneLabel">Open Night City</span><span class="kind" id="zoneKind"></span></span>
+    <span><span id="clock" class="off">--:--</span><span id="weather"></span></span>
+  </div>
+</div>
+<script>
+(function () {
+  "use strict";
+
+  // window.Open77 is the page bridge injected by the client: Open77.on(event,
+  // handler) receives what the client script sends with page:send(event,
+  // payload); Open77.emit(event, payload) raises an event page:on() handles.
+  // Nothing here talks to the network or decides anything.
+  var cfg = { warnAt: 25, panelWidthPx: 300 };
+  var el = function (id) { return document.getElementById(id); };
+  var body = document.body;
+  var hasState = false;
+  var visibleWanted = true;
+
+  function fmtMoney(n) {
+    if (typeof n !== "number" || !isFinite(n)) return "--";
+    var neg = n < 0;
+    var s = String(Math.trunc(Math.abs(n)));
+    s = s.replace(/\B(?=(\d{3})+(?!\d))/g, "\u202f");
+    return (neg ? "-" : "") + s;
+  }
+
+  function clamp(n, lo, hi) { return Math.min(hi, Math.max(lo, n)); }
+
+  function setNeed(id, value) {
+    var node = el(id);
+    var fill = node.querySelector(".fill");
+    var pct = node.querySelector(".pct");
+    node.classList.remove("low");
+    if (typeof value !== "number" || !isFinite(value)) {
+      fill.style.width = "0%";
+      pct.textContent = "--";
+      return;
+    }
+    var v = clamp(Math.round(value), 0, 100);
+    fill.style.width = v + "%";
+    pct.textContent = v + "%";
+    if (v < cfg.warnAt) node.classList.add("low");
+  }
+
+  function applyVisible() {
+    if (!hasState || !visibleWanted) body.classList.add("hidden");
+    else body.classList.remove("hidden");
+  }
+
+  function render(state) {
+    if (!state || typeof state !== "object") return;
+    hasState = true;
+    body.classList.remove("boot");
+
+    el("name").textContent = state.rpName || state.name || "--";
+    el("pid").textContent = "#" + (state.id != null ? state.id : "--");
+
+    el("cash").textContent = fmtMoney(state.cash);
+    el("account").textContent = fmtMoney(state.account);
+
+    var job = state.job;
+    var duty = el("duty");
+    if (job && job.label) {
+      el("job").textContent = job.label;
+      var grade = "";
+      if (typeof job.grade === "number") {
+        grade = job.grade + "/3";
+        if (job.gradeLabel) grade += " " + job.gradeLabel;
+      } else if (job.gradeLabel) {
+        grade = job.gradeLabel;
+      }
+      el("grade").textContent = grade;
+      duty.classList.toggle("on", job.onDuty === true);
+      el("dutyText").textContent = job.onDuty === true ? "on duty" : "off duty";
+    } else {
+      el("job").textContent = "unemployed";
+      el("grade").textContent = "";
+      duty.classList.remove("on");
+      el("dutyText").textContent = "no shift";
+    }
+
+    var needs = state.needs || {};
+    setNeed("need-hunger", needs.hunger);
+    setNeed("need-thirst", needs.thirst);
+    setNeed("need-fatigue", needs.fatigue);
+
+    if (state.zone && (state.zone.label || state.zone.name)) {
+      el("zoneLabel").textContent = state.zone.label || state.zone.name;
+      el("zoneKind").textContent = state.zone.kind || "";
+    } else {
+      el("zoneLabel").textContent = "Open Night City";
+      el("zoneKind").textContent = "";
+    }
+
+    applyVisible();
+  }
+
+  // ---- world clock: anchored on the last reading, ticking locally ----
+  var clock = null; // { secondsOfDay, rate, frozen, at (ms), weather }
+  var clockNode = el("clock");
+  var weatherNode = el("weather");
+
+  function setClock(c) {
+    if (!c || typeof c !== "object") return;
+    if (c.available === false) {
+      clock = null;
+      clockNode.textContent = "--:--";
+      clockNode.className = "off";
+      weatherNode.textContent = "";
+      return;
+    }
+    var sod = c.secondsOfDay;
+    if (typeof sod !== "number" && typeof c.hour === "number") {
+      sod = c.hour * 3600 + (c.minute || 0) * 60 + (c.second || 0);
+    }
+    if (typeof sod !== "number" || !isFinite(sod)) return;
+    clock = {
+      secondsOfDay: sod,
+      rate: typeof c.rate === "number" && isFinite(c.rate) ? c.rate : 0,
+      frozen: c.frozen === true,
+      at: performance.now(),
+      weather: c.weather || ""
+    };
+    tickClock();
+  }
+
+  function tickClock() {
+    if (!clock) return;
+    var sod = clock.secondsOfDay;
+    if (!clock.frozen && clock.rate > 0) {
+      sod += (performance.now() - clock.at) / 1000 * clock.rate;
+    }
+    sod = ((sod % 86400) + 86400) % 86400;
+    var h = Math.floor(sod / 3600);
+    var m = Math.floor((sod % 3600) / 60);
+    clockNode.textContent = (h < 10 ? "0" : "") + h + ":" + (m < 10 ? "0" : "") + m;
+    clockNode.className = clock.frozen ? "frozen" : "";
+    weatherNode.textContent = clock.weather ? clock.weather.replace(/_/g, " ") : "";
+  }
+  setInterval(tickClock, 1000);
+
+  // ---- bridge wiring ----
+  var bridge = window.Open77;
+  var handlers = {
+    config: function (c) {
+      if (!c || typeof c !== "object") return;
+      if (typeof c.warnAt === "number") cfg.warnAt = c.warnAt;
+      if (typeof c.panelWidthPx === "number") {
+        var w = clamp(Math.round(c.panelWidthPx), 200, 320);
+        document.documentElement.style.setProperty("--w", w + "px");
+      }
+    },
+    state: render,
+    visible: function (v) {
+      visibleWanted = !(v && v.visible === false);
+      applyVisible();
+    },
+    clock: setClock
+  };
+
+  var wired = false;
+  function wireBridge(b) {
+    if (wired || !b || typeof b.on !== "function") return false;
+    wired = true;
+    Object.keys(handlers).forEach(function (name) { b.on(name, handlers[name]); });
+    return true;
+  }
+
+  if (!wireBridge(bridge)) {
+    // Older bridge shape: events arrive as window messages.
+    window.addEventListener("message", function (event) {
+      var data = event.data || {};
+      var name = data.event || data.name;
+      if (handlers[name]) handlers[name](data.payload || data);
+    });
+  }
+
+  // Tell the client the page is up; if the bridge is injected a moment after
+  // this script ran, keep trying for a few seconds (and wire it then).
+  var readySent = false;
+  function sendReady() {
+    if (readySent) return true;
+    var b = window.Open77;
+    if (b && typeof b.emit === "function") {
+      wireBridge(b);
+      b.emit("ready", {});
+      readySent = true;
+      return true;
+    }
+    return false;
+  }
+  if (!sendReady()) {
+    var tries = 0;
+    var timer = setInterval(function () {
+      tries += 1;
+      if (sendReady() || tries > 50) clearInterval(timer);
+    }, 100);
+  }
+})();
+</script>
+</body>
+</html>
