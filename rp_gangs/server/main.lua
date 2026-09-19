@@ -573,6 +573,7 @@ local function defineBuyerPrompt()
             {
                 id = "rp_gangs_deal",
                 kind = "globalNpc",
+                npcs = "open77",   -- the buyer is an Open77-spawned NPC: resolve from the registry, never query the world
                 distance = Config.buyer.promptDistance,
                 markerDistance = Config.buyer.markerDistance,
                 marker = "shop",

@@ -77,7 +77,7 @@ RpCrimeConfig = {
         -- nativePrompt: the E prompt on the NPC goes through open77_interactions (a 250 ms world
         -- query on the client). Kept switchable: it was turned off on 2026-09-18 to isolate the
         -- Northside flat crash, which reproduced without it (platform loot bug, not this).
-        nativePrompt = false,
+        nativePrompt = true,
         -- Inside the rp_zones `junkyard` zone (centre 1374.9, -1674.9, 49.3 r 90, AMM point):
         -- Vik stands between the wrecks, 9 m north-east of the centre.
         position = { x = 1381.0, y = -1668.0, z = 49.4 },

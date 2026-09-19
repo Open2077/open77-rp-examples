@@ -353,9 +353,10 @@ d'état d'animation.
 
 Côté plateforme, mesuré : plus aucun `watcher pass cost` (0 en 30 min), hôte serveur 260–300
 µs/frame (pics 1,2 ms) contre 13 468 µs avant, 77–84 Hz ; `open77_interactions` 15–19 µs/frame
-sans cible monde. **Encore ouvert** : (a) la requête monde native (`Open77.world.nearby`, 80 m,
-« puppet ») coûte 41 ms par appel → les prompts fence / acheteur de gang restent sur
-`nativePrompt = false` tant que base ne l'a pas réduite ; (b) la banque 26 clips des gestes
+sans cible monde. **Encore ouvert** : (a) ~~la requête monde native coûtait 41 ms par appel~~ → réglé par base PR #44/#45 : une cible
+`globalNpc` restreinte aux PNJ Open77 (`npcs = "open77"`, ou une règle `record`) se résout depuis
+le registre sans requête monde ; fence et acheteur de gang sont revenus à `nativePrompt = true`
+(mesuré : 1,6 ms/s, aucune requête) ; (b) la banque 26 clips des gestes
 (`smoke_walk`, `point`…) n'est pas chargée par le moteur (A/B : avec elle, aucune couche ne
 joue ; avec la banque 2 clips, `carry` joue) → l'archive installée garde la banque 2 clips, les
 gestes attendent le correctif de base ; (c) l'épingle/route GPS de la phase `destination` n'a été
