@@ -74,6 +74,18 @@ the torso whatever the arms do. Defaults for `crate.small`:
 For `crate.cargo` (~0.9 m cube) start from `y = 0.6, z = 0.7`. The crate mesh's pivot was not
 measured: if it sits at the bottom of the mesh the box appears higher than the number says.
 
+**The crate in first person** (`Carry.firstPerson`). The binding above is measured on the
+third-person rig (the F7 body, everyone else's proxy). In first person the carrier's own client
+parents the crate to V's own `Chest`, which sits right under the camera: with the same numbers
+the crate's lid covers the whole screen (seen 2026-09-19). `firstPerson` is the placement that
+client uses instead -- only that client; other players keep `offset` / `rotation`. In the Chest
+frame +x is up and -y forward, so the default is the third-person spot 0.35 m lower and 0.15 m
+further out (crate low in the view, top edge under the crosshair). Tune it live with
+`carrytune <player> fpp x y z [rx ry rz]` (prints the numbers to copy into the config), `carrytune
+<player> fpp hide` draws no crate at all in first person, `carrytune <player> fpp off` reverts to
+the third-person numbers. A platform older than the option refuses the key once and the resource
+re-attaches without it.
+
 **The carry pose** (`RpNomadeConfig.Carry.animation`). A synchronized RP animation
 (`Open77.animations.play(playerId, profile, { clip, loop = true })`, permission
 `players.animations.control`), looped while the crate is held and stopped on load, drop (downed),

@@ -170,6 +170,15 @@ RpNomadeConfig.Carry = {
     bone = "Chest",   -- base PR #39 measured: hands midpoint of the carry pose in the Chest slot frame
     offset = { x = -0.135, y = -0.60, z = 0.008 },   -- tuned in game 2026-09-19 (crate.small, carry pose)
     rotation = { x = 0.0, y = 90.0, z = 0.0 },       -- the crate mesh lies on its side in the Chest slot frame
+    -- What the carrier's OWN client draws while its camera is first-person (`firstPerson` of
+    -- Open77.props.attach, wiki/attachments.md). The numbers above are for the third-person rig
+    -- (F7 body, other players' proxies); on V's own rig the Chest slot sits under the camera and
+    -- the same offset puts the crate's lid over the whole screen (seen 2026-09-19). In the Chest
+    -- frame +x is up and -y forward, so this is the third-person spot 0.35 m lower and 0.15 m
+    -- further out: crate low in the view, top edge under the crosshair. A measured guess -- tune
+    -- with `carrytune <player> fpp x y z [rx ry rz]` from the console -- or `"hide"` to draw no
+    -- crate at all in first person.
+    firstPerson = { offset = { x = -0.485, y = -0.75, z = 0.008 }, rotation = { x = 0.0, y = 90.0, z = 0.0 } },
     heldItem = { record = "Items.GenericCraftingMaterial1", slot = "WeaponRight" },
     -- The carry pose: a synchronized RP animation (Open77.animations.play, permission
     -- players.animations.control) looped for as long as the crate is held and stopped on load /

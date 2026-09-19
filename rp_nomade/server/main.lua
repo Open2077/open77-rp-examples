@@ -460,7 +460,17 @@ local function carryCrate(playerId, contract, crate)
             bone = bone,
             offset = C.Carry.offset,
             rotation = C.Carry.rotation,
+            firstPerson = C.Carry.firstPerson,   -- the carrier's own first-person view; nil = same as above
         })
+        if ok == nil and reason == "invalid_attachment" and C.Carry.firstPerson ~= nil then
+            -- A platform older than the first-person placement refuses the key; the
+            -- carry itself must not depend on it.
+            log("attach with firstPerson refused by this platform (%s); attaching without it", tostring(reason))
+            ok, reason = Open77.props.attach(crate.propId, {
+                parentType = "player", parentId = playerId, bone = bone,
+                offset = C.Carry.offset, rotation = C.Carry.rotation,
+            })
+        end
         if ok then
             crate.attached = "player"
             return "attached:" .. (bone ~= "" and bone or "root")
@@ -1670,14 +1680,34 @@ RegisterCommand("carrytune", function(source, args)
     local crate = contract and contract.carrying and contract.crates[contract.carrying]
     if not crate or not crate.propId then return log("carrytune: player %s is not carrying a crate", tostring(args[1])) end
     local i = 2
-    if args[2] and not tonumber(args[2]) then C.Carry.bone = (args[2] == "root") and "" or args[2]; i = 3 end
-    local n = {}
-    for k = 0, 5 do n[k + 1] = tonumber(args[i + k]) end
-    if n[1] and n[2] and n[3] then C.Carry.offset = { x = n[1], y = n[2], z = n[3] } end
-    if n[4] and n[5] and n[6] then C.Carry.rotation = { x = n[4], y = n[5], z = n[6] } end
+    -- `carrytune <player> fpp x y z [rx ry rz]` tunes the carrier's own first-person placement
+    -- (`carrytune <player> fpp hide` draws nothing in first person, `fpp off` uses the
+    -- third-person numbers); without `fpp`, the third-person binding as before.
+    if args[2] == "fpp" then
+        if args[3] == "hide" then C.Carry.firstPerson = "hide"
+        elseif args[3] == "off" then C.Carry.firstPerson = nil
+        else
+            local f = {}
+            for k = 0, 5 do f[k + 1] = tonumber(args[3 + k]) end
+            local current = type(C.Carry.firstPerson) == "table" and C.Carry.firstPerson or { offset = C.Carry.offset, rotation = C.Carry.rotation }
+            C.Carry.firstPerson = {
+                offset = (f[1] and f[2] and f[3]) and { x = f[1], y = f[2], z = f[3] } or current.offset,
+                rotation = (f[4] and f[5] and f[6]) and { x = f[4], y = f[5], z = f[6] } or current.rotation,
+            }
+        end
+    else
+        if args[2] and not tonumber(args[2]) then C.Carry.bone = (args[2] == "root") and "" or args[2]; i = 3 end
+        local n = {}
+        for k = 0, 5 do n[k + 1] = tonumber(args[i + k]) end
+        if n[1] and n[2] and n[3] then C.Carry.offset = { x = n[1], y = n[2], z = n[3] } end
+        if n[4] and n[5] and n[6] then C.Carry.rotation = { x = n[4], y = n[5], z = n[6] } end
+    end
     Open77.props.detach(crate.propId)
     local how = carryCrate(playerId, contract, crate)
-    log("carrytune player %d: bone=%s offset=%.3f,%.3f,%.3f rotation=%.1f,%.1f,%.1f -> %s", playerId,
+    local fpp = C.Carry.firstPerson
+    local fppWord = fpp == nil and "same" or (fpp == "hide" and "hide"
+        or ("%.3f,%.3f,%.3f / %.1f,%.1f,%.1f"):format(fpp.offset.x, fpp.offset.y, fpp.offset.z, fpp.rotation.x, fpp.rotation.y, fpp.rotation.z))
+    log("carrytune player %d: bone=%s offset=%.3f,%.3f,%.3f rotation=%.1f,%.1f,%.1f firstPerson=%s -> %s", playerId,
         C.Carry.bone ~= "" and C.Carry.bone or "root", C.Carry.offset.x, C.Carry.offset.y, C.Carry.offset.z,
-        C.Carry.rotation.x, C.Carry.rotation.y, C.Carry.rotation.z, tostring(how))
+        C.Carry.rotation.x, C.Carry.rotation.y, C.Carry.rotation.z, fppWord, tostring(how))
 end)
