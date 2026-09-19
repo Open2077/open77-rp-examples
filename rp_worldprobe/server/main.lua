@@ -45,3 +45,35 @@ RegisterCommand("vwarp", function(source, args)
     local ok, why = Open77.vehicles.setTransform(id, { x = x, y = y, z = z, yaw = tonumber(args[5]) or 0.0 })
     log("vwarp %d -> %.1f %.1f %.1f: %s", id, x, y, z, ok and "ok" or ("refused: " .. tostring(why)))
 end)
+
+-- Lab: `aplay <playerId> <profile> [once]` / `astop <playerId>` from the console play or stop an
+-- animation profile on a player through the platform service, and every animation state change
+-- is printed, so a bot session can prove a layer profile survives walking without a human.
+RegisterCommand("aplay", function(source, args)
+    if source ~= 0 then return end
+    local playerId, profile = tonumber(args[1]), args[2]
+    if not playerId or not profile then return log("usage (console): aplay <playerId> <profile> [once]") end
+    local def = Open77.animations.get(profile)
+    if not def then return log("aplay: profile %s unknown to this server", tostring(profile)) end
+    local playback, why = Open77.animations.play(playerId, profile, { loop = args[3] ~= "once" })
+    log("aplay %d %s kind=%s locomotion=%s -> %s", playerId, profile, tostring(def.kind), tostring(def.locomotion),
+        playback and ("playbackId=" .. tostring(playback.playbackId)) or ("refused: " .. tostring(why)))
+end)
+
+RegisterCommand("astop", function(source, args)
+    if source ~= 0 then return end
+    local playerId = tonumber(args[1])
+    if not playerId then return log("usage (console): astop <playerId>") end
+    local ok, why = Open77.animations.stop(playerId)
+    log("astop %d -> %s", playerId, ok and "ok" or ("refused: " .. tostring(why)))
+end)
+
+AddEventHandler("onPlayerAnimationChanged", function(playerId, state)
+    if type(state) == "string" then
+        local ok, decoded = pcall(json.decode, state)
+        if ok then state = decoded end
+    end
+    if type(state) ~= "table" then return log("anim %s: %s", tostring(playerId), tostring(state)) end
+    log("anim %s: profile=%s active=%s reason=%s playbackId=%s", tostring(playerId), tostring(state.profile),
+        tostring(state.active), tostring(state.reason), tostring(state.playbackId))
+end)

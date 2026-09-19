@@ -1,6 +1,6 @@
 # rp_needs
 
-Hunger, thirst and fatigue for a Night City RP server. Server-only resource
+Hunger, thirst and fatigue for a Night City RP server. The three values are **satiety** levels (100 = full, 0 = starving / parched / exhausted); the HUD labels them Food / Water / Energy. Below 0 food or water the body loses 1 HP every 10 s down to 10 HP until the player eats or drinks (`/needs`, the kiosks, `/setneeds` for admins). Server-only resource
 (no client script): the server owns the three values, persists them, applies
 the effects and pushes warnings to the player's biomonitor.
 

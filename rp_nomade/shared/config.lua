@@ -55,10 +55,11 @@ RpNomadeConfig.Destinations = {
     },
     afterlife_street = {
         label = "Watson, the Afterlife street",
-        -- The street outside the Afterlife ramp (probed, crosswalk); Kabuki's lanes are
-        -- pedestrian, no truck fits there (checked in game 18 Sept). Not an rp_zones zone:
-        -- planar check like the Drive-In.
-        position = { x = -1408.0, y = 960.0, z = 23.5 },
+        -- The street outside the Afterlife ramp, 20 m up from the garage lot: with the
+        -- point ON the lot ring the "Afterlife street lot" prompt beat the truck's Unload
+        -- prompt (bot run 19 Sept); here the truck's own card wins. Kabuki's lanes are
+        -- pedestrian, no truck fits there. Not an rp_zones zone: planar check.
+        position = { x = -1426.0, y = 974.0, z = 23.6 },
         radius = 25.0,
         zone = false,
     },

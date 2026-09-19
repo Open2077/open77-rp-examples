@@ -10,7 +10,7 @@ auto_start true
 -- world.query   : Open77.world.nearby on the client
 -- world.vehicles: Open77.vehicles.setTransform (console `vwarp`, lab helper)
 -- network.events: the console command reaches the client and the rows come back
-permissions { "world.query", "world.vehicles", "network.events" }
+permissions { "world.query", "world.vehicles", "players.animations.control", "network.events" }
 
 server_script "server/main.lua"
 client_script "client/main.lua"
