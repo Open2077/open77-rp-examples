@@ -37,7 +37,7 @@ local NEEDS = { "hunger", "thirst", "fatigue" }
 -- `after` is a delayed second effect (the synthcoke crash).
 -- `stage` names the NEEDS_STAGE gesture played on the body when the item is consumed.
 local CONSUMABLES = {
-    water      = { label = "Water",      thirst = 30, stage = "drink" },
+    water      = { label = "Water",      thirst = 30, stage = "bottle" },
     nicola     = { label = "Nicola",     thirst = 20, fatigue = 5, stage = "drink" },
     burrito    = { label = "Burrito",    hunger = 35, stage = "eat" },
     cigarettes = { label = "Cigarettes", fatigue = 5, hunger = -2, stage = "smoke" },
@@ -45,29 +45,27 @@ local CONSUMABLES = {
                    after = { delayMs = 300000, fatigue = -20 } },
 }
 
--- Staging (2026-09-18 pass): eating and drinking are one-shot gestures everybody sees, played
--- once rp_inventory's "Using ..." bar is through. Same rules as rp_mecano / rp_nomade (this
--- resource has no shared config, so the table lives here): `pose.profiles` are
--- open77_animations profiles tried in order through Open77.animations.get (best FUTURE name
--- first -- `bottle`, `takeout` of the 76-profile catalogue, which ship their own bottle / box --
--- then today's 18-profile eval catalogue); `loop = false` is a one-shot of `durationMs`.
--- `drink` and `smoke` ship their own can / cigarette, so only the food needs a prop today:
--- a curated alias attached to the right hand (hand-slot axes are not measured on 2.31, start
--- from zero and move one axis at a time). Once `takeout` exists, drop the `eat.prop` line.
+-- Gestures start after rp_inventory's use bar. Prefer walkable upper-body profiles;
+-- older catalogues fall back to their stationary workspots. The animation resource
+-- owns the native hand item and removes it on completion or combat interruption.
+-- Do not attach another wrist mesh: both the layer profiles and takeout own their props.
 local NEEDS_STAGE = {
     enabled = true,
     drink = {
         durationMs = 4000,
-        pose = { profiles = { { profile = "bottle" }, { profile = "drink" } }, loop = false },
+        pose = { profiles = { { profile = "drink_walk" }, { profile = "drink" } }, loop = false },
+    },
+    bottle = {
+        durationMs = 4000,
+        pose = { profiles = { { profile = "bottle_walk" }, { profile = "bottle" }, { profile = "drink" } }, loop = false },
     },
     eat = {
         durationMs = 4000,
         pose = { profiles = { { profile = "takeout" }, { profile = "think" } }, loop = false },
-        prop = { models = { "food.street_food" }, bone = "RightHand", offset = { x = 0.0, y = 0.0, z = 0.0 }, rotation = { x = 0.0, y = 0.0, z = 0.0 } },
     },
     smoke = {
         durationMs = 6000,
-        pose = { profiles = { { profile = "smoke" } }, loop = false },
+        pose = { profiles = { { profile = "smoke_walk" }, { profile = "smoke" } }, loop = false },
     },
     snort = {
         durationMs = 3000,

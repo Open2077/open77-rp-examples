@@ -32,6 +32,12 @@ and a real duration — the pattern is explained in the site guide
 for carrying something while walking (pick-up, `carry` loop, put-down, crates attached to the
 truck bed) and its README shows how to tune bone/offset/rotation by eye with `carrytune`.
 
+Walking smoking, drinks and phone actions now use the platform's native hand items.
+`rp_needs`, `rp_bar` and `rp_phone` prefer the upper-body profiles and declare
+`open77_animations`; keep that system resource from the current base build.
+See [walking actions and inventory items](docs/walking-actions.md) for job integration,
+interruption cleanup and the current first-person limitation.
+
 ## Running the set
 
 1. An Open77 server on the current `main` build (the carry animation layer and the loot fixes

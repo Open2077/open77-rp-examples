@@ -12,17 +12,12 @@ RpPhoneConfig = {
     -- (kvp counter), so the phone still works on a dev box.
     fallbackFirstNumber = 9001,
 
-    -- RP animation profiles (rp-animation-catalogue): played on the player by the
-    -- server while the phone is open / while a call is active, looped until the phone
-    -- closes or the call ends. Each entry is a list tried in order through
-    -- Open77.animations.get -- the best FUTURE name first (`phonecheck`, `call` of the
-    -- 76-profile catalogue), then what today's 18-profile eval catalogue has (`phone`, the
-    -- only phone pose, which ships its own holo prop). Set an entry to nil to disable it.
-    -- The platform cancels the pose when the player walks (> 0.5 m); it is replayed on the
-    -- next state push, so the phone is back in the hand as soon as they stop.
+    -- Prefer walkable upper-body profiles with the platform's native phone prop.
+    -- Older catalogues fall back to stationary workspots. Lists are tried in order
+    -- through Open77.animations.get; nil disables an entry. Combat cancels the pose.
     anim = {
-        open = { "phonecheck", "phone" },   -- menu open: "Check phone" / "Use a phone" (tap phone)
-        call = { "call", "phone" },         -- call active: "Phone call" / the same tap pose today
+        open = { "phone_walk", "phonecheck", "phone" },
+        call = { "call_walk", "call", "phone" },
     },
 
     -- Calls

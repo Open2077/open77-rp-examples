@@ -692,6 +692,14 @@ local function stageClear(playerId)
 end
 
 local function playProfile(playerId, profile, durationMs)
+    if type(profile) == "table" then
+        local selected
+        for _, candidate in ipairs(profile) do
+            local ok, entry = pcall(Open77.animations.get, candidate)
+            if ok and type(entry) == "table" then selected = candidate; break end
+        end
+        profile = selected
+    end
     if not profile then return end
     local playback, reason = Open77.animations.play(playerId, profile, { durationMs = durationMs, loop = false })
     if not playback and not animationWarned then

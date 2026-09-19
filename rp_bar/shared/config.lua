@@ -131,7 +131,7 @@ RpBarConfig.Stage = {
     -- The customer drinks what they were served (one-shot, the profile's own can).
     sip = {
         durationMs = 4000,
-        pose = { profiles = { { profile = "bottle" }, { profile = "drink" } }, loop = false },
+        pose = { profiles = { { profile = "bottle_walk" }, { profile = "bottle" }, { profile = "drink" } }, loop = false },
     },
 }
 
@@ -159,8 +159,9 @@ RpBarConfig.drunk = {
         { above = 5, strength = 0.5 },
         { above = 3, strength = 0.2 },
     },
-    -- the RP profile played on the drinker after /use (false = none)
-    profile = "drink",
+    -- Profile candidates after /use; a single string still works, false disables.
+    -- The selected profile supplies its native hand item; no extra wrist mesh.
+    profile = { "bottle_walk", "bottle", "drink" },
     profileDurationMs = 4000,
     labels = {
         { above = 7, text = "wasted" },

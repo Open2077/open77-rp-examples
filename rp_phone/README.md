@@ -13,7 +13,7 @@ server also owns the numbers, the voice channels, the animation the body plays a
 ## Setup
 
 1. Load list (`resources.load`): `open77_notifications` (declared dependency, ships a client half),
-   then `rp_phone`. Reached through `pcall` and optional at runtime: `rp_inventory` (the `phone`
+   `open77_animations`, then `rp_phone`. Reached through `pcall` and optional at runtime: `rp_inventory` (the `phone`
    item), `rp_identity` (names and citizen ids), `rp_ncpd`, `rp_trauma`, `rp_delamain`, `rp_jobs`,
    `rp_economy`, `rp_bank`. Each one missing degrades to a chat line, never to a broken resource.
 2. **Numbers come from NCID.** A citizen registered in `rp_identity` (`/carte`) owns
@@ -30,8 +30,10 @@ server also owns the numbers, the voice channels, the animation the body plays a
 
 Bottom-right, dark, no external asset. `ESC` or the `X` closes it; focus (keyboard + cursor) is
 held only while it is open, and a client watchdog releases a focus nothing owns any more. While
-the panel is open the server plays the `phone` RP profile on the body (`call` during a call); the
-animation service cancels it on its own when the body moves, dies or enters a vehicle.
+the panel is open the server prefers `phone_walk` (`call_walk` during a call), with
+the platform's native phone and locomotion preserved. Combat, death and entering a
+vehicle interrupt it. Older catalogues fall back to stationary phone workspots.
+See [walking actions](../docs/walking-actions.md) for the first-person limitation.
 
 | Tab | What it does |
 |---|---|

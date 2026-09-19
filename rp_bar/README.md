@@ -7,6 +7,11 @@ customers who **see the price and accept** before paying in cash. Drinking a gla
 per-player **buzz** that wobbles the screen and, past a point, makes the drinker stumble. A
 synthesized club ambience plays around the counter.
 
+Drink poses prefer `bottle_walk` with a native bottle and keep locomotion available.
+`RpBarConfig.drunk.profile` accepts a candidate list, a single profile name or `false`.
+The platform owns the sip prop; bartender tools and kegs keep their custom attachments.
+See [walking actions](../docs/walking-actions.md).
+
 Server-authoritative: the job, the duty, the distance, the pockets, the money and the ledger
 are all decided on the server. The client renders the counter ring/prompt and the ALT+click
 action, and requests.

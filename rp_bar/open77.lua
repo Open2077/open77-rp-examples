@@ -40,6 +40,7 @@ dependency "open77_worldui >=0.1.0"
 dependency "open77_contextmenu"
 dependency "open77_player_interactions >=1.0.0"
 dependency "open77_notifications"
+dependency "open77_animations"
 dependency "open77_sound"
 --   open77_props               : the client projection that draws the bottle / keg in the hand
 dependency "open77_props >=0.1.0"

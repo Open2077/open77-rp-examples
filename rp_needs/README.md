@@ -56,6 +56,11 @@ in the toast, and the same effects/thresholds run as for a built-in item.
 Unknown ids answer `nil, "not_consumable"`. Every consume sends the player a
 short toast and emits `rp_needs:changed` immediately.
 
+After the inventory use bar, water uses `bottle_walk`, Nicola uses `drink_walk`,
+and cigarettes use `smoke_walk`, with stationary catalogue fallbacks. The platform
+supplies and cleans up their native hand items; no manual wrist offsets are needed.
+Eating uses `takeout` and its own food prop. See [walking actions](../docs/walking-actions.md).
+
 ## Event
 
 `rp_needs:changed (playerId, hunger, thirst, fatigue)` on the host-wide bus,

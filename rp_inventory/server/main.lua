@@ -475,16 +475,16 @@ local function applyEffect(playerId, itemId, def)
         return true
     end
 
-    if kind == "food" or kind == "drink" then
-        -- rp_needs is written in parallel: reach it through pcall, never a dependency.
+    if kind == "food" or kind == "drink" or kind == "smoke" then
+        -- Optional needs resource owns the consumption effect and body gesture.
+        local verb = kind == "food" and "eat" or kind == "smoke" and "smoke" or "drink"
         local called, result, reason = callExport("rp_needs", "consume", playerId, itemId)
         if called then
             if not result then return nil, reason or "needs_refused" end
-            tell(playerId, (kind == "food") and ("You eat the %s. Better."):format(def.label:lower())
-                or ("You drink the %s. Better."):format(def.label:lower()))
+            tell(playerId, ("You %s the %s."):format(verb, def.label:lower()))
         else
             tell(playerId, ("You %s the %s. (No needs system on this server, so it is just flavour.)")
-                :format(kind == "food" and "eat" or "drink", def.label:lower()))
+                :format(verb, def.label:lower()))
         end
         return true
     end
@@ -502,11 +502,6 @@ local function applyEffect(playerId, itemId, def)
         else
             tell(playerId, ("Poured %d L of CHOOH2 into the tank."):format(litres))
         end
-        return true
-    end
-
-    if kind == "smoke" then
-        tell(playerId, "You light one up. Night City smells a little worse.")
         return true
     end
 

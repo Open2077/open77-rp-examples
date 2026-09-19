@@ -6,6 +6,7 @@ auto_start true
 -- declares it so a server whose load list lacks it refuses to start us
 -- instead of dropping every warning without a word.
 dependency "open77_notifications"
+dependency "open77_animations"
 
 permissions {
     "network.events",       -- Open77.notifications.send, RegisterNetEvent (chat:ready)

@@ -11,6 +11,7 @@ auto_start true
 -- open77_notifications ships a client half, so a manifest delivered to clients may
 -- depend on it; the card of Open77.notifications.send asks for the line.
 dependency "open77_notifications"
+dependency "open77_animations"
 
 -- rp_inventory, rp_identity, rp_ncpd, rp_trauma, rp_delamain, rp_jobs, rp_bank and
 -- rp_economy are reached through exports inside pcall and never declared: this

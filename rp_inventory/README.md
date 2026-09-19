@@ -92,7 +92,7 @@ Money is not an item and never appears on the panel (`rp_economy` owns it).
 | `scrap` | Scrap | 1.0 | no | |
 | `component` | Component | 0.5 | no | |
 | `chip` | Data chip | 0.05 | no | |
-| `cigarettes` | Pack of cigarettes | 0.1 | yes | flavour |
+| `cigarettes` | Pack of cigarettes | 0.1 | yes | `rp_needs:consume`: smoking gesture, fatigue +5, hunger -2; flavour if needs is offline |
 | `synthcoke` | Synthcoke | 0.1 | yes | **illegal**; full stamina |
 | `implant_box` | Implant box | 2.0 | no | **illegal** unless the holder has the `medecin` job |
 | `crate` | Cargo crate | 25.0 | no | heavy cargo |

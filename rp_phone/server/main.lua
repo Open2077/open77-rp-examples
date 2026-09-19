@@ -442,7 +442,7 @@ local function stopAnim(s)
 end
 
 -- Config.anim entries are lists of profiles tried in order through Open77.animations.get
--- (best future name first, then what today's catalogue has); the first known one is kept.
+-- (walkable profile first, then stationary fallbacks); the first known one is kept.
 local resolvedAnim = {}
 local function resolveProfile(list)
     if type(list) ~= "table" then return list end
