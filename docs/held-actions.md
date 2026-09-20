@@ -84,11 +84,13 @@ No new per-job attachment lifecycle is necessary. Their existing stock walking
 profiles continue working without `options.item` or configuration changes.
 
 The experimental first-person adapter shows hands/items for the can, bottle,
-cigarette, cigar and hold profiles on the tested female body. It keeps the item
-visible at the lower right between sips and follows the camera during contact.
+cigarette, cigar and hold profiles on the tested female and male bodies. It keeps
+the item visible at the lower right between sips and follows the camera during contact.
 Hold → drink → hold preserves the item; completion removes it. Punching cancels
-the layer and item, and replay creates a fresh presentation. Male bodies, other
-appearances and custom shapes remain under validation. A successful server call
+the layer and item, and replay creates a fresh presentation. Ground sprinting
+preserves `hold_item_walk` and its item. Third-person can contact reaches the lips
+on both tested bodies; other third-person combinations, appearances and custom
+shapes remain under validation. A successful server call
 does not prove that every phase renders correctly. Phone and other gestures do
 not have the new first-person adapter.
 
