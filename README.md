@@ -32,6 +32,7 @@ visuals, holding versus drinking, permissions and current first-person limits.
 | Jobs | `rp_mecano` (repair, paint, refuel, invoices, impound), `rp_ferrailleur` (scrapper), `rp_bar`, `rp_ripperdoc`, `rp_medic`, `rp_trauma` (death, respawn at Vik's, bills), `rp_ncpd` (cuff, search, fines, jail) + `rp_mdt`, `rp_netrunner`, `rp_fixer`, `rp_nomade` (crate convoys: carry animation, cargo in the truck bed, GPS route), `rp_delamain` (taxi) |
 | World | `rp_zones`, `rp_ambiance`, `rp_shops` (kiosks + vendors), `rp_bank` (ATMs), `rp_garage`, `rp_housing` (five real flats, doors found through `open77_doors`), `rp_needs` (hunger/thirst/fatigue), `rp_phone`, `rp_radio`, `rp_vigile` (security), `rp_fireworks` (synchronized shows) |
 | Crime | `rp_crime` (lockpick, shop robbery, dealer, fence), `rp_gangs` (territories, street market) |
+| Spectacle | `rp_fireworks` (synchronized shows), `rp_drones` (a drone light show: real drone bodies held in the sky, an OPEN//77 sign, cut and flip-book choreography) |
 | Lab helpers | `rp_selftest` (33 checks, console `selftest`), `rp_taxitest` (`groundz`), `rp_worldprobe` (`wprobe`, `vwarp`), `eval_taxi` (the first taxi) |
 
 **`rp_fireworks` is the short one to read first.** Two hundred lines of server
