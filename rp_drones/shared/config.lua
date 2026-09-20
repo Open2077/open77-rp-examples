@@ -1053,13 +1053,31 @@ RpDronesConfig = {
         -- client, and then lit -- one message per drone. That is the whole
         -- launch, and it replaced a 75 m climb from a pad that cost more
         -- bandwidth than the three figures put together.
+        -- LENGTH IS NEARLY FREE, and that is what this show is built on.
+        --
+        -- Two consecutive steps that share a formation and a place differ only
+        -- in their light, and the engine RELIGHTS instead of respawning: the
+        -- bodies never blink, never restream, and a colour change costs one
+        -- effect round trip per drone instead of a whole entity. So a figure
+        -- can be held for half a minute while it changes colour three times,
+        -- for the price of the one cut that put it there.
+        --
+        -- That matters because of the owner's report on 2026-09-21: "le
+        -- spectacle est beaucoup trop court". The old version was twenty
+        -- seconds of holds. This one runs about a minute and a half, and the
+        -- extra minute is entirely relights.
         open77 = {
-            { formation = "ring",          place = "stage", morph = 0,     hold = 2000, color = "cyan",    lit = false },
-            { formation = "ring",          place = "stage", morph = 0,     hold = 3000, color = "cyan" },
-            { formation = "heart",         place = "stage", morph = 15000, hold = 4000, color = "magenta" },
-            { formation = "seventy_seven", place = "stage", morph = 12000, hold = 7000, color = "amber" },
-            { formation = "ring",          place = "stage", morph = 19000, hold = 2500, color = "cyan" },
-            { formation = "ring",          place = "stage", morph = 0,     hold = 1200, color = "cyan",    lit = false },
+            { formation = "ring",          place = "stage", morph = 0,     hold = 1500,  color = "cyan",    lit = false },
+            { formation = "ring",          place = "stage", morph = 0,     hold = 7000,  color = "cyan" },
+            { formation = "ring",          place = "stage", morph = 0,     hold = 6000,  color = "acid" },
+            { formation = "heart",         place = "stage", morph = 15000, hold = 10000, color = "magenta" },
+            { formation = "heart",         place = "stage", morph = 0,     hold = 9000,  color = "blood" },
+            { formation = "seventy_seven", place = "stage", morph = 12000, hold = 11000, color = "amber" },
+            { formation = "seventy_seven", place = "stage", morph = 0,     hold = 8000,  color = "white" },
+            { formation = "seventy_seven", place = "stage", morph = 0,     hold = 8000,  color = "acid" },
+            { formation = "ring",          place = "stage", morph = 19000, hold = 8000,  color = "cyan" },
+            { formation = "ring",          place = "stage", morph = 0,     hold = 7000,  color = "magenta" },
+            { formation = "ring",          place = "stage", morph = 0,     hold = 1200,  color = "cyan",    lit = false },
         },
 
         -- One figure. 29 seconds, for a finish line or a toast, where nobody
@@ -1076,8 +1094,10 @@ RpDronesConfig = {
         -- stands still and only changes colour. 54 seconds.
         heart = {
             { formation = "ring",  place = "stage", morph = 0,     hold = 1500,  color = "magenta", lit = false },
-            { formation = "ring",  place = "stage", morph = 0,     hold = 2000,  color = "magenta" },
-            { formation = "heart", place = "stage", morph = 15000, hold = 20000, color = "magenta" },
+            { formation = "ring",  place = "stage", morph = 0,     hold = 4000,  color = "magenta" },
+            { formation = "heart", place = "stage", morph = 15000, hold = 22000, color = "magenta" },
+            { formation = "heart", place = "stage", morph = 0,     hold = 16000, color = "blood" },
+            { formation = "heart", place = "stage", morph = 0,     hold = 14000, color = "magenta" },
             { formation = "heart", place = "stage", morph = 0,     hold = 14000, color = "blood" },
             { formation = "heart", place = "stage", morph = 0,     hold = 1200,  color = "blood",   lit = false },
         },
@@ -1219,6 +1239,13 @@ RpDronesConfig = {
         -- enough to be photographed, and go.
         sign = {
             stage = { standoff = 46.0, altitude = 15.0, width = 32.0, height = 24.0 },
+            -- ONE figure, so every second after the first is a relight and the
+            -- sign never blinks. A minute of OPEN//77 changing colour costs one
+            -- cut and four effect swaps per drone.
+            { formation = "sign_open77_stacked", place = "stage", morph = 0, hold = 16000, color = "cyan" },
+            { formation = "sign_open77_stacked", place = "stage", morph = 0, hold = 12000, color = "magenta" },
+            { formation = "sign_open77_stacked", place = "stage", morph = 0, hold = 12000, color = "acid" },
+            { formation = "sign_open77_stacked", place = "stage", morph = 0, hold = 12000, color = "amber" },
             { formation = "sign_open77_stacked", place = "stage", morph = 0, hold = 14000, color = "cyan" },
         },
 
