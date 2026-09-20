@@ -16,6 +16,14 @@ the exports and the log lines to expect.
 > French speakers: the complete map of the set — per-phase tables, Night City coordinates,
 > test paths and every platform trap paid for — is [`README.fr.md`](README.fr.md).
 
+## Walking actions and held items
+
+The platform's compiled animation service manages the default cigarette, phone,
+can or bottle for walking profiles. `rp_needs`, `rp_bar` and `rp_phone` already
+use `Open77.animations.play`; they inherit this cleanup without an extra job-side
+prop loop. See [the action/item API](docs/held-actions.md) for custom inventory
+visuals, holding versus drinking, permissions and current first-person limits.
+
 ## What is here
 
 | Group | Resources |
