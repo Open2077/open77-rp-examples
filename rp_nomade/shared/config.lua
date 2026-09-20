@@ -158,13 +158,9 @@ RpNomadeConfig.Crate = {
 --
 -- The binding is the one of wiki/attachments.md: `bone` is a named slot of the player rig
 -- ("RightHand", "LeftHand", "Chest", "Head") or "" for the body root; `offset` is metres in that
--- slot's OWN frame and `rotation` degrees (x roll, y pitch, z yaw). The root frame is the only one
--- whose axes are known for sure: +y is where the player faces, +x their right, +z up, origin at the
--- feet. A hand slot follows the arm swing, so the crate would swing with it; the root keeps the box
--- level in front of the torso whatever the arms do, which is what a two-hand carry looks like.
--- Numbers below are measured guesses for `crate.small`: the crate's pivot is ~0.45 m in front of
--- the spine, its bottom ~0.85 m off the ground (forearm height). For `crate.cargo` (~0.9 m cube)
--- try y = 0.6, z = 0.7. If the box sits in the body, raise `y`; if it floats, lower `z`.
+-- slot's OWN frame and `rotation` degrees (x roll, y pitch, z yaw). These defaults use Chest:
+-- +x is up, -y is forward. They were tuned for crate.small and the two-hand carry pose.
+-- Use carrytune for other models; root-frame offsets cannot be reused in the Chest frame.
 -- A slot the rig does not expose hides the crate (`bone_unavailable` on the client); "" always exists.
 RpNomadeConfig.Carry = {
     mode = "attach",
@@ -184,15 +180,12 @@ RpNomadeConfig.Carry = {
     -- The carry pose: a synchronized RP animation (Open77.animations.play, permission
     -- players.animations.control) looped for as long as the crate is held and stopped on load /
     -- drop / cancel / disconnect / death. Profiles are tried in order at start; the first one the
-    -- server's open77_animations catalogue knows is used. No catalogue on 2.31 ships a box-carry
-    -- clip: `tablet2` (76-profile catalogue, two hands holding a tablet at chest height) and
-    -- `phone` (18-profile catalogue, `stand__2h_phone__03__shuffle__01`: both hands in front of
-    -- the chest, no tapping) are the closest two-hand holds. `clip` must belong to the profile.
-    -- RP animations are workspots: the platform cancels them as soon as the player walks more
-    -- than 0.5 m (or gets in a vehicle, or dies); locomotion is never frozen. `resume` replays the
-    -- pose once the carrier has stood still for `resumeAfterMs` (moved less than `stillDistance`
-    -- between two server ticks), so the box is held again at the truck. Set `enabled = false` to
-    -- carry with the crate only.
+    -- server's open77_animations catalogue knows is used. `carry` is an upper-body layer,
+    -- so walking/running keeps the pose. `tablet2` and `phone` are stationary fallbacks for
+    -- older catalogues; walking beyond 0.5 m cancels those workspots. `clip` must belong to
+    -- its profile. After interruption, `resume` retries once the carrier stands still for
+    -- resumeAfterMs (movement within stillDistance between ticks). Disable it to leave the
+    -- pose stopped. Set enabled=false to carry only the crate.
     animation = {
         enabled = true,
         profiles = {
@@ -206,12 +199,9 @@ RpNomadeConfig.Carry = {
     },
     -- One-shot clips around every crate move, all server-driven so everybody sees them. Each step
     -- plays a profile (tried in order, first known one wins; `clip` optional) for `ms`, and the
-    -- prop move (attach / detach / place) happens WHEN THE TIMER ENDS, never instantly. No
-    -- catalogue exposes clip lengths (Open77.animations: durationMs is a scheduling duration),
-    -- so `ms` is the visible length of the step: tune it to the clip. No shipped profile is a real
-    -- "lift a box" / "put a box down": the kneel-to-the-ground profiles (`scavenge`, 76-profile;
-    -- `examine`, 18-profile) stand in for bending to pick up and to put down, `give` (arms
-    -- extend to hand an item over) stands in for lifting into / taking out of the bed.
+    -- prop move (attach / detach / place) happens WHEN THE TIMER ENDS. The job owns this timer;
+    -- durationMs schedules the animation. Carry transitions are preferred for pickup/putdown,
+    -- with older stationary kneeling profiles as fallbacks. `give` is the load/take gesture.
     steps = {
         pickup  = { profiles = { { profile = "carry_pickup" }, { profile = "scavenge" }, { profile = "examine" } }, ms = 1400 },
         load    = { profiles = { { profile = "give" } }, ms = 2000 },

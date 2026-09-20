@@ -380,8 +380,8 @@ end
 
 ---------------------------------------------------------------------------------------------------
 -- The carry pose: a looped RP animation while a crate is held (Open77.animations, permission
--- players.animations.control). The platform cancels a workspot as soon as the carrier walks
--- (> 0.5 m), so the tick replays it once they stand still again (Carry.animation.resume).
+-- players.animations.control). `carry` retains locomotion; only older workspot fallbacks stop
+-- on movement. After an interruption the tick may resume the pose (Carry.animation.resume).
 ---------------------------------------------------------------------------------------------------
 
 local carryPose = nil        -- { profile, clip } resolved at start from Carry.animation.profiles, or nil
@@ -1527,8 +1527,8 @@ AddEventHandler("open77:helditem:completed", function(player, requestId, operati
     log("player %s held item %s: %s%s", tostring(player), tostring(operation), accepted and "accepted" or "refused", accepted and "" or (" (" .. tostring(reason) .. ")"))
 end)
 
--- The pose was cancelled by the platform (the carrier walked, got in the truck, died...): forget
--- its id so the tick can replay it once they stand still again.
+-- The pose was cancelled by the platform (combat, vehicle entry, death, or movement during
+-- a workspot fallback): forget its id so the tick may replay it once they stand still again.
 AddEventHandler("onPlayerAnimationChanged", function(playerId, stateJson)
     local id = tonumber(playerId)
     local contract = id and contracts[id]

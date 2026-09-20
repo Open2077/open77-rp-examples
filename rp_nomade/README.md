@@ -1,7 +1,8 @@
 # rp_nomade — convoys and crate deliveries in the Badlands
 
-The scripted run of the `nomade` job (rp_jobs v2), replacing the v1 courier mission. Build
-target **2.31.13+op77.76**. Server-authoritative: the client draws rings and prompts and sends
+The scripted run of the `nomade` job (rp_jobs v2), replacing the v1 courier mission.
+Use the current base build with its carry layer and matching client assets; the
+historical run below used **2.31.13+op77.76**. Server-authoritative: the client draws rings and prompts and sends
 intents; the server decides the job gate, the money, the truck, the crates, the zones, the
 ambush and the pay.
 
@@ -14,12 +15,10 @@ The run, as one player sees it:
    (`Vehicle.v_standard3_thorton_mackinaw_player`, a player-spawnable `_player` record) is spawned
    at the camp's truck spot, and N **crate props** (`crate.small`, `Open77.props`) appear at the
    loading points. Each crate gets its own ring + `E` prompt **Pick up the crate**.
-3. **Carry** — `E` on a crate: you bend down (`Carry.steps.pickup`, 2.5 s, profile `scavenge` /
-   `examine`), then the crate prop is attached in front of your chest (`Open77.props.attach`, root
-   binding, `Carry.offset`: everybody sees you carrying it) and a two-hand carry pose loops
-   (`Open77.animations.play`, profile `tablet2` or `phone`, see
-   [Carrying and the bed](#carrying-and-the-truck-bed-how-to-tune)). One crate at a time. The pose
-   is a workspot: it stops while you walk and comes back once you stand still.
+3. **Carry** — `E` on a crate: `carry_pickup` plays for 1.4 s, then the crate attaches
+   to `Chest` and the two-hand `carry` upper-body layer loops. You can walk and run
+   while carrying it. One crate at a time. Older catalogues fall back to stationary
+   poses; see [Carrying and the bed](#carrying-and-the-truck-bed-how-to-tune).
 4. **Load** — `E` on the rented truck, within 4 m: **Load the crate**. You lift it in
    (`Carry.steps.load`, 2 s, profile `give`); when the clip is over the crate leaves your arms and
    is **attached to the truck** in the next free bed slot (`Truck.bed.slots`, vehicle attachment),
@@ -34,7 +33,7 @@ The run, as one player sees it:
    destination rp_zones does not know, `zone = false`), `E` on the truck: **Unload**. A
    sequence per crate, all animated and server-driven: take it out of the bed (`steps.take`, 2 s,
    `give`; the crate jumps from the bed to your arms), carry it a moment (`steps.carryMs`, 1.5 s,
-   the carry loop), put it down (`steps.putdown`, 2.5 s, `scavenge` / `examine`; the crate is
+   the carry loop), put it down (`steps.putdown`, 2.4 s, `carry_putdown`; the crate is
    placed on the ground beside the truck, where it stays 30 s or until the run ends). Walking off
    between two crates stops the unloading. Then the pay: **150 €$ per crate** in cash, a
    **25 % convoy bonus** (split between the nomads on duty within 30 m of the truck, driver
@@ -51,28 +50,27 @@ the vehicle registry removes a forgotten truck after 40 min).
 
 ## Carrying and the truck bed: how to tune
 
-Everything below is a **measured guess** the owner is expected to tune from the game; the numbers
-live in `shared/config.lua` and reload with the resource (`refresh` then `restart rp_nomade`).
+The current defaults live in `shared/config.lua` and reload with the resource
+(`refresh` then `restart rp_nomade`). The Chest attachment was tuned for
+`crate.small`; check placement again when changing the crate model or rig.
 
 **The crate in the hands** (`RpNomadeConfig.Carry`). The binding is the one of
 `wiki/attachments.md`: `Open77.props.attach(propId, { parentType = "player", parentId, bone,
 offset, rotation })`. `bone` is a named slot of the player rig (`RightHand`, `LeftHand`, `Chest`,
 `Head`) or `""` for the body root; `offset` is metres **in that slot's own frame**, `rotation`
-degrees (x roll, y pitch, z yaw). The resource binds to the **root** (`bone = ""`) on purpose: it
-is the only frame whose axes are known (+y where the player faces, +x their right, +z up, origin
-at the feet), and a hand slot swings with the arm while the root keeps the box level in front of
-the torso whatever the arms do. Defaults for `crate.small`:
+degrees (x roll, y pitch, z yaw). The resource uses **Chest**, keeping the crate
+between the arms while following the torso. Defaults for `crate.small`:
 
 | Key | Default | Effect |
 |---|---|---|
-| `Carry.bone` | `""` (root) | `"Chest"` binds to the spine slot instead: the box then follows crouching, but the slot's axes are not measured, so start from `offset = {0,0,0}` and move one axis at a time |
-| `Carry.offset.y` | `0.45` | forward: the box sits in the body → raise; it floats away from the forearms → lower |
-| `Carry.offset.z` | `0.85` | height of the crate pivot (forearm height): too high → lower |
-| `Carry.offset.x` | `0.0` | sideways |
-| `Carry.rotation` | `{0,0,0}` | z turns the box around the vertical |
+| `Carry.bone` | `"Chest"` | follows the torso slot |
+| `Carry.offset.y` | `-0.60` | forward in this Chest frame is negative y |
+| `Carry.offset.z` | `0.008` | lateral correction in the Chest frame |
+| `Carry.offset.x` | `-0.135` | height correction in the Chest frame |
+| `Carry.rotation` | `{0,90,0}` | compensates for the crate mesh's orientation in this slot |
 
-For `crate.cargo` (~0.9 m cube) start from `y = 0.6, z = 0.7`. The crate mesh's pivot was not
-measured: if it sits at the bottom of the mesh the box appears higher than the number says.
+Use `carrytune <player> Chest ox oy oz rx ry rz` to measure a different model.
+Offsets for the body root cannot be reused as Chest offsets.
 
 **The crate in first person** (`Carry.firstPerson`). The binding above is measured on the
 third-person rig (the F7 body, everyone else's proxy). In first person the carrier's own client
@@ -89,42 +87,48 @@ re-attaches without it.
 **The carry pose** (`RpNomadeConfig.Carry.animation`). A synchronized RP animation
 (`Open77.animations.play(playerId, profile, { clip, loop = true })`, permission
 `players.animations.control`), looped while the crate is held and stopped on load, drop (downed),
-cancel, disconnect and death. **No catalogue on 2.31 ships a box-carry clip** (the vanilla
-`bodycarry` / `jackie__stand__rh_flathead_box` names in `docs/data/emote-animations.txt` are not
-addressable by any shipped device). `profiles` are tried in order at start and the first one the
-server's `open77_animations` catalogue knows is used:
+cancel, disconnect and death. `profiles` are tried in order at start; the first
+one in the running server's catalogue is used:
 
 | Profile | Catalogue | Clip | Why |
 |---|---|---|---|
+| `carry` | current platform | profile default | upper-body carry layer; legs retain locomotion |
 | `tablet2` | 76-profile (`Work on tablet`) | default `stand__2h_tablet__02__use_tablet__01` | two hands holding a tablet at chest height, the closest two-hand hold |
 | `phone` | 18-profile (`Use a phone`, the one deployed) | `stand__2h_phone__03__shuffle__01` | both hands in front of the chest, idle shuffle (no tapping) |
 
-RP animations are workspots, and the platform cancels one as soon as the player walks more than
-0.5 m, gets in a vehicle or dies; locomotion is never frozen and there is no upper-body mask
-(`upperBody` is refused by the API). So the pose plays at pickup, drops while you walk, and comes
-back once you have stood still for `resumeAfterMs` (1500 ms, moved less than `stillDistance` =
-0.15 m between two server ticks). Each start briefly switches the local view to the third-person
-body. `resume = false` keeps only the pickup pose; `enabled = false` carries the crate alone. A
-refused pose is logged once per crate and never blocks the run.
+`carry` keeps playing while walking or running. The older `tablet2` and `phone`
+fallbacks are workspots: movement beyond 0.5 m cancels those poses. After an
+interruption, the job can restart its carry pose once the player stands still
+for `resumeAfterMs` (1500 ms; `stillDistance` = 0.15 m between ticks).
+`resume = false` disables that restart; `enabled = false` carries the crate alone.
+A refused pose is logged once per crate and never blocks the run.
+
+The job owns each crate across pickup, player attachment, truck attachment and
+ground placement. It therefore uses `Open77.props` independently of the animation.
+The new native `item` / `itemContact` options concern hand-held consumption items;
+mouth fitting does not resize or reposition a two-hand crate. See the public
+[action/item examples](../docs/held-actions.md) for inventory consumption and
+hold → drink → hold. The five new FPS consumption arm profiles do not add FPS
+crate-carry arms; `Carry.firstPerson` controls the crate's presentation separately.
 
 **The steps** (`RpNomadeConfig.Carry.steps`). Nothing moves instantly any more: every crate move
 is a one-shot clip (`Open77.animations.play(playerId, profile, { loop = false, durationMs = ms })`)
 and the prop move (attach / detach / place) happens **when the step timer ends**. The timer is
-the resource own: no catalogue exposes clip lengths and the API `durationMs` is a scheduling
-duration, so `ms` is what you tune to the clip. While a step runs (`busy` in the snapshot) the
+the resource's own: `durationMs` schedules the step, and `ms` also determines when
+the job moves the crate. While a step runs (`busy` in the snapshot) the
 truck prompts are hidden and every intent answers `Finish what you are doing first.`
 
 | Step | When | Profiles tried (first known wins) | Default `ms` | At the end of the timer |
 |---|---|---|---|---|
-| `pickup` | E on a crate | `scavenge` (76-profile, kneel and rummage), `examine` (18-profile, kneel and inspect the ground) | 2500 | crate attached to the player, carry loop starts |
+| `pickup` | E on a crate | `carry_pickup`, then `scavenge`, `examine` | 1400 | crate attached to the player, carry loop starts |
 | `load` | E Load on the truck | `give` (arms extend to hand an item over) | 2000 | crate detached from the player, attached to the bed slot |
 | `take` | each crate at unloading | `give` | 2000 | crate detached from the bed, attached to the player, carry loop |
 | `carryMs` | between take and put-down | the carry loop | 1500 | put-down starts |
-| `putdown` | unloading, `/convoi annuler` while carrying, downed while carrying | `scavenge`, `examine` | 2500 | crate placed on the ground (`groundGap` 1.2 m from the truck on the driver side, `groundSpacing` 0.9 m, rows of two) for `groundTtlMs` (30 s), or back at the loading bay when downed |
+| `putdown` | unloading, `/convoi annuler` while carrying, downed while carrying | `carry_putdown`, then `scavenge`, `examine` | 2400 | crate placed on the ground (`groundGap` 1.2 m from the truck on the driver side, `groundSpacing` 0.9 m, rows of two) for `groundTtlMs` (30 s), or back at the loading bay when downed |
 
-No shipped profile is a real "lift a box" or "put a box down": the kneel-to-the-ground profiles
-stand in for bending, `give` for lifting into and out of the bed. A step whose profiles are all
-unknown, or whose `ms` is under 1000 (the API minimum), still waits `ms` without a clip.
+`carry_pickup` and `carry_putdown` use the platform's carry layer transitions;
+`give` remains the load/take gesture. A step whose profiles are all unknown, or
+whose `ms` is under 1000 (this script's threshold), still waits `ms` without a clip.
 
 **The truck bed** (`RpNomadeConfig.Truck.bed`). A loaded crate is
 `Open77.props.attach(propId, { parentType = "vehicle", parentId = truckId, bone = "", offset,
@@ -212,8 +216,7 @@ destination and camp flags that reveal the Unload / Return prompts), `onPlayerDi
 (contract abandoned, everything removed), `onPlayerLifeStateChanged` (down while carrying: the
 crate goes back to its loading point), `onVehicleRemoved` (truck lost: the run ends) and
 `open77:helditem:completed` (log only, `held` carry mode) and `onPlayerAnimationChanged` (the
-carry pose was cancelled by the platform, typically because the carrier walked: the tick replays
-it once they stand still).
+carry pose was interrupted: the tick can replay it once they stand still).
 
 Internal net events (`rp_nomade:state`, `rp_nomade:clientReady`, `rp_nomade:board`,
 `rp_nomade:pickup`, `rp_nomade:load`, `rp_nomade:unload`, `rp_nomade:return`) are this
@@ -316,6 +319,10 @@ loading points.
 
 ## Log (grep-able)
 
+Historical output from the earlier fallback-catalogue run is retained below.
+On current defaults, expect `bone=Chest`, `pose=carry/...`,
+`pickup=carry_pickup/1400ms` and `putdown=carry_putdown/2400ms` instead.
+
 ```text
 [rp_nomade] camp props spawned: 2
 [rp_nomade] started: 3 templates, camp at 1792.9 2248.9 180.2, board at 1790.0 2252.0, ambush on at 1600.0 600.0 r=60, carry=attach bone=root pose=phone/stand__2h_phone__03__shuffle__01, bed slots=4
@@ -363,9 +370,8 @@ Permissions: `network.events`, `database.access`, `world.vehicles`, `world.props
 Dependencies (all ship a client half): `open77_uikit` (menu + progress, server twins),
 `open77_worldui` (board, crates, destination ring), `open77_interactions` (truck prompts),
 `open77_props` (the crate projection, the carry and bed attachments), `open77_notifications`
-(payout toasts). The carry pose needs the platform's `open77_animations` system resource running
-(it is auto-started and not declared as a dependency: without it the pose is refused and logged,
-the run is unchanged). `rp_jobs`, `rp_zones`, `rp_inventory`, `rp_economy`, `rp_bank`, `rp_identity` are
+(payout toasts), and `open77_animations` (synchronized animation presentation).
+`rp_jobs`, `rp_zones`, `rp_inventory`, `rp_economy`, `rp_bank`, `rp_identity` are
 reached through `pcall`'d exports: without `rp_jobs` the board answers "the clan roster is
 offline"; without `rp_zones` the destination and camp checks fall back to a planar distance
 against `Destinations[...].radius` / 9 m; without `rp_economy` no deposit can be taken, so no
@@ -397,10 +403,11 @@ real Badlands drive: allow the 20 minutes.
    board), a ring on the map at the junkyard. Log: `player 1 accepted contract 'scav_parts'
    crates=3 dest=junkyard ...`.
 4. `/convoi` → `Crates: 0/3 loaded, 0/3 delivered.`, `Time left: 20 min`, `Convoy: none...`.
-5. Walk to crate 1, look at it, **E** → its ring goes, you kneel for 2.5 s, then
+5. Walk to crate 1, look at it, **E** → its ring goes, pickup plays for 1.4 s, then
    `Crate 1/3 in your arms...`: the crate hangs in front of your chest, both hands come up to hold
-   it (the view flips to the third-person body). Walk: the hands drop, the crate stays; stop for
-   2 s: the hands come back. **E** on another crate → `Your hands are full, choom.`
+   it in third person. Walk and run: the upper-body carry pose and crate remain.
+   **E** on another crate → `Your hands are full, choom.` Older catalogues may
+   instead use the stationary fallback described above.
 6. Walk to the truck (within 4 m), look at it: **Load the crate** — **E** → arms extend for 2 s
    (the prompt is gone meanwhile), then `Crate 1/3 loaded. 2 to go.`; the crate now sits in the
    bed behind the cab. Log `player 1 loaded crate 1/3 (load=give/... 2000ms, bed slot 1, attached
@@ -415,7 +422,7 @@ real Badlands drive: allow the 20 minutes.
 8. Stop inside the junkyard ring (toast `Junkyard` from rp_zones, chat `You made it. Park, get
    out and press E on the truck to unload.`). Get out, look at the truck: **Unload** — **E**.
    Per crate (`Unloading crate 1/3...`): 2 s arms out, the crate jumps from the bed to your arms,
-   1.5 s carry loop, 2.5 s kneel, the crate is on the ground beside the truck (6 s per crate;
+   1.5 s carry loop, 2.4 s put-down, the crate is on the ground beside the truck (5.9 s per crate;
    walk more than 6 m from the truck between two crates to stop and keep the rest in the bed).
    The three crates stay on the ground 30 s.
    Then: `Delivered 3 crates: +450 €$ cash. Wallet: 850 €$.`, toast `Delivery paid`, `Run
@@ -449,13 +456,10 @@ real Badlands drive: allow the 20 minutes.
   to the hand (the carry then hides the prop).
 - Running contracts do not survive a server restart (props, NPCs and non-persistent vehicles do
   not either); the SQL row is left `active` and shows as such in `/convois`.
-- The carry pose is a stationary workspot: it cannot play while walking (the platform cancels it
-  past 0.5 m, and there is no upper-body mask), so on the move only the crate shows the carry.
-  No shipped animation catalogue has a real box-carry clip; `tablet2` / `phone` are the closest
-  two-hand holds. Both catalogues list their clips as `asset_verified_runtime_pending`.
-- Carry offsets, bed slots, the pose and the step timers were written from the API and the
-  vehicle/rig frames, not measured in game: expect one tuning pass on `Carry.offset`,
-  `Truck.bed.slots` and `Carry.steps.*.ms`.
-- The one-shot steps are stationary workspots too: a player who walks during a step cancels its
-  clip, but the timer and the prop move still complete (server-driven), so the crate can appear
-  in the bed or on the ground while the player is already elsewhere.
+- Older catalogues use stationary `tablet2` / `phone` fallbacks; current `carry`
+  uses an upper-body layer and retains locomotion.
+- The crate attachment was tuned for `crate.small`; other models, garments and
+  rigs still need placement checks. FPS crate placement is separate from FPS arms.
+- `give` and older step fallbacks are workspots: moving can cancel their clip,
+  while the job's timer still completes the prop move. The upper-body pickup and
+  put-down profiles retain locomotion, but their timers still belong to the job.

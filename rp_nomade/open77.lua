@@ -24,6 +24,7 @@ dependency "open77_uikit >=1.0.0"
 dependency "open77_worldui >=0.1.0"
 dependency "open77_interactions >=0.1.0"
 dependency "open77_props >=0.1.0"
+dependency "open77_animations"
 dependency "open77_notifications"
 
 -- rp_jobs, rp_zones, rp_inventory, rp_economy and rp_bank are reached through pcall'd exports:
