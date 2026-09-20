@@ -1,7 +1,8 @@
 # Walking RP actions and inventory items
 
-Use a base build containing [base PR #56](https://github.com/Open2077/open77-base/pull/56),
-including its client, server, system resources and both updated animation archives.
+Use a base build with upper-body RP profiles, including matching client, server,
+system resources and animation archives. See the public
+[RP animation guide](https://open2077.net/docs/rp-animations) for compatibility.
 The `/anim` implementation stays in the platform's `open77_animations` resource;
 do not copy a second animation controller into a job.
 
@@ -25,18 +26,23 @@ and its default item; a later play recreates it. Switch directly between hold an
 drink profiles without stopping between them to preserve the can. Keep each
 playback ID and stop only the action your resource owns.
 
-For a different inventory item, validate ownership on the server, call
-`Open77.heldItems.hold(playerId, record)` from the owning resource, then play a
-compatible grip. That resource must release its item on completion or interruption.
-The asynchronous request does not prove the mesh rendered: observe
-`open77:helditem:completed`. The manifest needs `network.events`, `world.props`,
-`players.life.read` and `players.animations.control`.
-See the [native hand item contract](https://github.com/Open2077/open77-base/blob/main/wiki/attachments.md#native-hand-items-and-walking-rp-actions).
+For a different inventory item, validate ownership on the server and pass its
+native `Items.*` record as `options.item` to a compatible profile. The manifest
+needs `players.animations.control` and `world.props`. The platform owns the
+temporary item's cleanup. Use `Open77.heldItems.hold` separately when an item
+must outlive the animation; its resource then owns release. See
+[walking actions and native items](held-actions.md) for both lifecycles.
+
+Consumption contact is automatic with the experimental native adapter. For an
+unusual model, an optional server-side `itemContact` selects a measured point;
+see [mouth contact](held-actions.md#optional-mouth-contact). Existing jobs need
+no per-item tuning to request the default behavior.
 
 An arbitrary inventory identifier is not necessarily a native item factory with a
 visible model or a matching animation grip. Job tools and the Nomad crate keep their
 custom mesh attachments; those still require model-specific bone transforms.
 
-These are third-person body animations. Native hand props are hidden on the owner's
-first-person view; first-person RP arm playback is not implemented. Returning to
-third person restores the projection.
+Third-person playback and experimental first-person arms require matching client
+code and animation assets. First-person support is profile-dependent; phone and
+other gestures do not have the new adapter. Contact, grip and body compatibility
+remain under validation. An accepted server request does not prove rendering.

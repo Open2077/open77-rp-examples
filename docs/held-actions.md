@@ -41,6 +41,39 @@ animation. An item already owned by that resource suppresses the animation's
 default and remains that resource's responsibility. Stop the previous action
 before taking independent ownership of an occupied hand.
 
+## Optional mouth contact
+
+With matching client, server and animation assets, the experimental native
+adapter estimates mouth contact from the item's geometry for `drink_walk`,
+`bottle_walk`, `smoke_walk` and `cigar_walk`. Omit `itemContact` for this automatic
+behavior. `hold_item_walk` only holds the item; it does not fit it to the mouth.
+
+An unusual inventory model can supply a measured contact point without moving
+its authored grip:
+
+```lua
+-- Server permissions: players.animations.control, world.props
+local action, reason = Open77.animations.play(playerId, 'bottle_walk', {
+    item = itemDefinition.record,
+    itemContact = itemDefinition.mouthPoint,
+})
+if not action then print(reason); return end
+-- mouthPoint: nil for automatic contact, or {x=..., y=..., z=...} for this model.
+```
+
+The point uses metres in the native item's local frame. Missing axes are zero;
+supplied coordinates must be finite and within ±2 metres. `itemContact=false`
+disables fitting. This option is server-only, requires `world.props` even when
+false, and may be set on each sequence step. Omit it on a later action or step
+to restore automatic contact. Invalid points return `invalid_item_contact`
+before replacing the action. The same record keeps its animation-owned prop ID.
+
+This adjusts the arm, not inventory or grip placement. Independently held items
+keep their own settings; their owner can set `contact` on the native item's
+`Open77.props.attach` binding. Broader visual validation remains incomplete.
+See [item size and mouth contact](https://open2077.net/docs/rp-animations#item-size-and-mouth-contact)
+for compatibility and failure details.
+
 ## Existing examples and visual limits
 
 `rp_needs` continues to own inventory/needs policy and action timing; `rp_bar`
@@ -54,8 +87,8 @@ coverage remain under validation. Do not treat a successful server call as proof
 that every animation phase renders correctly. Phone and other gestures do not
 yet have the new first-person adapter.
 
-For full options, errors and lifecycle rules see the matching base checkout's
-`wiki/rp-animations.md`, section "Animation-owned items: one server call".
+For full options, errors and lifecycle rules see the public
+[RP animation guide](https://open2077.net/docs/rp-animations#animation-owned-items-one-server-call).
 
 A sequence controls one player's successive actions. Coordinating a handover or
 another interaction between players remains the RP resource's responsibility;
