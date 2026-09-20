@@ -267,6 +267,14 @@ local function stageBasis(anchor, facingDeg, standoffOverride, stageOverride)
         normalX = normalX,
         normalY = normalY,
         stage = stage,
+        -- WHICH WAY A BODY LOOKS. The normal points from the stage back at the
+        -- audience, so a drone whose forward IS the normal is nose-on to the
+        -- people watching -- and a drone rig's emissives are on its nose. The
+        -- shows spawned every body at yaw 0 (due north) until the owner said
+        -- he was looking at the wrong side of eighty-eight aircraft.
+        --
+        -- Inverting `forward(yaw) = (-sin yaw, cos yaw)`.
+        yaw = math.deg(math.atan(-normalX, normalY)),
     }
 end
 
@@ -494,7 +502,7 @@ end
 --- appears already in formation and then ignites. That replaced a launch from
 --- a pad on the ground, which looked better and cost two 75 m morphs -- about
 --- 60% of the show's whole bandwidth bill -- for the privilege.
-local function spawnDrone(style, position, bucket, colorName, lit, ttlMs, effectOverride)
+local function spawnDrone(style, position, bucket, colorName, lit, ttlMs, effectOverride, yaw)
     local radius = clamp(number(Config.streamingRadius, 900.0), 10.0, 2000.0)
     local hysteresis = clamp(number(Config.streamingHysteresis, 150.0), 0.0, radius)
 
@@ -523,7 +531,7 @@ local function spawnDrone(style, position, bucket, colorName, lit, ttlMs, effect
             -- flies with a lit sensor head.
             appearance = npc.appearance,
             position = position,
-            yaw = 0.0,
+            yaw = number(yaw, 0.0),
             bucket = bucket,
             aiMode = taskDriven(style) and Open77.npcs.ai.tasks or Open77.npcs.ai.frozen,
             damagePolicy = Open77.npcs.damage.invulnerable,
@@ -561,7 +569,7 @@ local function spawnDrone(style, position, bucket, colorName, lit, ttlMs, effect
         model = (Config.drone or {}).model or "light.candle",
         kind = "light",
         position = position,
-        yaw = 0.0,
+        yaw = number(yaw, 0.0),
         bucket = bucket,
         light = lightFor(colorName, lit),
         streamingRadius = radius,
@@ -810,8 +818,13 @@ local function despawnAll(run)
     -- The lights go with the bodies, always and in the same call. A light left
     -- behind is a bright point hanging where a drone used to be, which is the
     -- most conspicuous way this resource could fail to clean up after itself.
-    for index = 1, #(run.lightIds or {}) do
-        local id = run.lightIds[index]
+    -- Walked against the BODIES, not against `#lightIds`. A light that was
+    -- refused leaves a hole in that table, and `#` on a table with a hole may
+    -- stop at it -- which would leave every light after the hole burning in
+    -- the sky with no drone under it.
+    local lightIds = run.lightIds or {}
+    for index = 1, math.max(#run.ids, #lightIds) do
+        local id = lightIds[index]
         if id ~= nil then Open77.effects.remove(id) end
     end
     run.ids = {}
@@ -827,9 +840,72 @@ end
 --- the npc style picks a named light from `light` or from what that colour
 --- maps to. One argument, two readings, decided here instead of at five call
 --- sites.
+--- Which way every body of a figure looks: nose-on to the audience, plus
+--- whatever `drone.yawOffset` the server owner dialled in.
+---
+--- The offset exists because "which end of the rig glows" is a property of the
+--- ART, not of the maths -- four of the nine Bombus appearances put their lamp
+--- on the sensor head and the rest do not. One number in the config turns the
+--- whole swarm around; nothing here has to be rewritten to try the other side.
+local function figureYaw(run)
+    local basis = run.basis or {}
+    return number(basis.yaw, 0.0) + number((Config.drone or {}).yawOffset, 0.0)
+end
+
+--- Light the figure that is already in the sky, IN SLICES.
+---
+--- This is the fix for the half-lit sign, and the cause is worth stating in
+--- full because nothing in the server log hinted at it.
+---
+--- Eighty-eight looping effects created in one server tick reach the client as
+--- one registry snapshot, and `open77_effects` projects a snapshot inside a
+--- single frame. That frame ran out of script budget -- `Open77 script
+--- execution budget exceeded ... in upvalue 'projectLooping'`, 19 times in the
+--- log of one evening -- and an aborted projection pass does two things at
+--- once: the lights it had not reached are never spawned, AND the lights of
+--- the figure being retired are never stopped. The dead ones keep their slot
+--- in the client's per-owner effect quota (192), so the next figure is refused
+--- outright: `effect NNNN rejected: quota_exceeded`, 448 times, and the owner
+--- photographed the result -- thirty-five dark drones in the middle of the
+--- sign.
+---
+--- Slicing hands the projector a few records a frame instead of eighty-eight.
+--- It costs nothing to look at: a swarm that lights up over a third of a
+--- second is what a drone show does anyway.
+local function igniteFigure(run, pose, lightName)
+    local lights = ((Config.drone or {}).npc or {}).lights or {}
+    if lights.enabled == false then return end
+    local slice = math.max(1, math.floor(number(lights.sliceSize, 12)))
+    local pause = math.max(0, math.floor(number(lights.sliceMs, 60)))
+    local token = run.figureToken
+    local target = run.lightIds
+    CreateThread(function()
+        -- Everything this thread put up, so an abort can take back exactly
+        -- what it is responsible for. Removing an id twice is harmless;
+        -- leaving one behind is a light burning over nothing.
+        local mine = {}
+        for index = 1, #pose do
+            if not run.alive or run.figureToken ~= token then
+                for _, id in ipairs(mine) do Open77.effects.remove(id) end
+                return
+            end
+            local id = spawnLight(pose[index], run.bucket, lightName)
+            if id ~= nil then
+                target[index] = id
+                mine[#mine + 1] = id
+            end
+            if index % slice == 0 and pause > 0 then Wait(pause) end
+        end
+    end)
+end
+
 local function spawnFigure(run, pose, step, lit, withLight)
     local colorName = type(step) == "table" and step.color or step
     local lightName = lightNameFor(step, colorName)
+    local yaw = figureYaw(run)
+    -- Bumped on every figure, so an ignition still sweeping the PREVIOUS
+    -- formation knows it is stale and takes its own lights back down.
+    run.figureToken = number(run.figureToken, 0) + 1
     run.ids = {}
     run.lightIds = {}
     for index = 1, #pose do
@@ -837,7 +913,7 @@ local function spawnFigure(run, pose, step, lit, withLight)
         -- from it); the LIGHT takes the named light. Passing one for the other
         -- is exactly the bug this signature was reshaped to prevent.
         local id, reason = spawnDrone(run.style, pose[index], run.bucket,
-            colorName, lit, run.ttl, run.record)
+            colorName, lit, run.ttl, run.record, yaw)
         if id == nil then
             despawnAll(run)
             return false, ("drone %d of %d: %s"):format(index, #pose, tostring(reason))
@@ -845,9 +921,9 @@ local function spawnFigure(run, pose, step, lit, withLight)
         run.ids[index] = id
         run.positions[index] = pose[index]
         run.sent[index] = pose[index]
-        if run.style == "npc" and withLight ~= false then
-            run.lightIds[index] = spawnLight(pose[index], run.bucket, lightName)
-        end
+    end
+    if run.style == "npc" and withLight ~= false then
+        igniteFigure(run, pose, lightName)
     end
     return true
 end
@@ -890,12 +966,21 @@ end
 --- difference between two entity round trips per drone per cycle and one.
 local function relightFigure(run, lightName)
     if run.style ~= "npc" then return 0 end
+    local lights = ((Config.drone or {}).npc or {}).lights or {}
+    local slice = math.max(1, math.floor(number(lights.sliceSize, 12)))
+    local pause = math.max(0, math.floor(number(lights.sliceMs, 60)))
     local swapped = 0
     for index = 1, #run.ids do
+        if not run.alive then break end
         local old = run.lightIds[index]
         if old ~= nil then Open77.effects.remove(old) end
         run.lightIds[index] = spawnLight(run.positions[index], run.bucket, lightName)
         if run.lightIds[index] ~= nil then swapped = swapped + 1 end
+        -- Sliced for the same reason the ignition is: a colour change is
+        -- eighty-eight stops and eighty-eight starts, and handing the client
+        -- all of them in one frame is what emptied its quota. This one runs
+        -- inside the show thread, so it can simply yield.
+        if index % slice == 0 and pause > 0 then Wait(pause) end
     end
     run.light = lightName
     return swapped
@@ -1010,12 +1095,24 @@ local function runCost(run)
     local drones = #run.ids
     if drones == 0 then drones = run.droneCount or 0 end
     if run.driver == "stream" then
-        return number(run.hz, 0) * drones
+        -- A staggered show only ever has its front in flight.
+        local moving = math.min(drones, math.max(1, number(run.front, drones)))
+        return number(run.hz, 0) * moving
             * number((clock.bytesPerUpdate or {})[run.style], 555)
     end
     if run.driver == "hybrid" then
-        return number(run.hz, 0) * drones
-            * number((clock.bytesPerUpdate or {}).effect, 555)
+        -- Zero, for the same reason a cut show is zero: the hybrid's BODIES
+        -- hold the figure and a held body sends nothing. Only its flying half
+        -- costs, it only exists during a movement, and `flyTo` sizes that
+        -- flight against the budget at the moment it flies.
+        --
+        -- Charging the whole swarm here as if it streamed continuously was
+        -- self-defeating in the exact sense: 88 bodies were billed 209 KB/s of
+        -- traffic they never sent, the run then asked whether it could afford
+        -- to fly, and was refused by its own phantom bill. Measured live
+        -- 2026-09-20: "the flying half does not fit the budget: playtest
+        -- (88 npc drones, 209 KB/s) already in the air".
+        return 0.0
     end
     if run.driver == "sequence" then
         local perFigure = number(((Config.drone or {}).npc or {}).bytesPerFigure, 300)
@@ -1145,8 +1242,9 @@ end
 --- Fly the swarm from where it is to `targets` over `morphMs`, then hold.
 ---
 --- Returns false when the run was cancelled or gave up; the caller stops.
-local function flyTo(run, targets, morphMs)
+local function flyTo(run, targets, morphMs, step)
     local clock = Config.clock or {}
+    step = type(step) == "table" and step or {}
     local origins = {}
     local longest = 0.0
     for index = 1, #run.positions do
@@ -1192,10 +1290,27 @@ local function flyTo(run, targets, morphMs)
     end
 
     local epsilon = math.max(0.0, number(clock.moveEpsilon, 0.05))
-    -- The rate was decided by the byte budget when the show was accepted, and
-    -- is not revisited per morph: a rate that drifted mid-show would put the
-    -- link back over the clamp exactly where the traffic is heaviest.
-    local interval = math.max(1, math.floor(1000.0 / run.hz + 0.5))
+
+    -- THE STAGGERED WAVE. `stagger` is the fraction of the morph each drone
+    -- spends in flight; drones start in index order, so a text flows into the
+    -- next text letter by letter instead of the whole swarm lurching at once.
+    --
+    -- And it is the moving-front budget made concrete: a drone that has not
+    -- started or has already landed sends nothing (the dead band sees no
+    -- change), so only about `count x stagger` drones are in flight at any
+    -- instant. The rate is re-derived HERE for that front rather than for the
+    -- whole swarm -- 88 drones at once is 1.3 Hz inside the slice; a front of
+    -- 13 is 8 Hz -- and that is what keeps the motion live now that the client
+    -- interpolates between updates.
+    local stagger = clamp(number(step.stagger, 1.0), 0.05, 1.0)
+    local hz = run.hz
+    if stagger < 1.0 then
+        local perUpdate = math.max(1, number((clock.bytesPerUpdate or {})[run.style], 555))
+        local front = math.max(1, math.ceil(#run.ids * stagger))
+        local wanted = clamp(number(clock.updateHz, 8), 0.1, 30.0)
+        hz = clamp(math.min(wanted, availableBytes() / (perUpdate * front)), 0.5, 30.0)
+    end
+    local interval = math.max(1, math.floor(1000.0 / hz + 0.5))
 
     -- THE SPEED LIMIT IS THE STEP SIZE. There is no client-side interpolation,
     -- so a drone teleports from one update to the next and the step is what
@@ -1203,7 +1318,7 @@ local function flyTo(run, targets, morphMs)
     -- the step small is to keep the speed down -- and a morph that would
     -- exceed it is stretched, never run. Easing puts the peak at 1.5x the
     -- average, and that is what gets compared.
-    local maxSpeed = stepLimit(run.style) * run.hz
+    local maxSpeed = stepLimit(run.style) * hz
     if seconds > 0.0 and longest > 0.0 then
         local required = 1.5 * longest / maxSpeed
         if required > seconds then
@@ -1240,12 +1355,19 @@ local function flyTo(run, targets, morphMs)
         -- Driven by the clock, not by the sum of the sleeps: a late tick
         -- shortens the next step instead of stretching the whole morph.
         local elapsed = Open77.time.monotonic() - startedAt
-        local phase = smoothstep(elapsed / seconds)
         local finished = elapsed >= seconds
         local exhausted = false
+        local count = #run.ids
+        -- Each drone's flight is `stagger x seconds` long and starts at its
+        -- share of the remainder, in index order. stagger = 1 collapses to
+        -- everybody at once, which is the old behaviour exactly.
+        local window = seconds * stagger
+        local span = seconds - window
 
-        for index = 1, #run.ids do
+        for index = 1, count do
             local origin, target = origins[index], targets[index]
+            local startAt = count > 1 and span * (index - 1) / (count - 1) or 0.0
+            local phase = smoothstep((elapsed - startAt) / math.max(0.001, window))
             local place = finished and target or snap({
                 x = origin.x + (target.x - origin.x) * phase,
                 y = origin.y + (target.y - origin.y) * phase,
@@ -1365,7 +1487,7 @@ local function revealFigure(run, pose, step, revealMs)
         while placed < wanted do
             placed = placed + 1
             local id, reason = spawnDrone(run.style, pose[placed], run.bucket,
-                colorName, step.lit ~= false, run.ttl, run.record)
+                colorName, step.lit ~= false, run.ttl, run.record, figureYaw(run))
             if id == nil then
                 despawnAll(run)
                 log("reveal of %s refused at drone %d of %d: %s",
@@ -1429,8 +1551,11 @@ local function cutTo(run, step)
         return false
     end
     run.formation, run.place, run.light = step.formation, step.place, wantedLight
-    log("cut into %s lit %s: %d bodies and %d lights spawned",
-        step.formation, wantedLight, #run.ids, #run.lightIds)
+    -- The lights are counted as ASKED FOR, not as already up: they are
+    -- spawned in slices from here on, so `#lightIds` would read zero on the
+    -- line that announces the figure.
+    log("cut into %s lit %s: %d bodies, igniting %d lights",
+        step.formation, wantedLight, #run.ids, #run.ids)
 
     -- A spawn is an id at once and a body later, per client. Waiting bounds
     -- how ragged the figure fades in; it cannot make it simultaneous.
@@ -1579,7 +1704,13 @@ local function hybridTo(run, step)
         ids = {}, positions = {}, sent = {}, lightIds = {},
         bucket = run.bucket, ttl = run.ttl, record = nil,
     }
-    local hz, refusal = budgetedRate(#run.positions, "effect")
+    -- Price the FRONT, not the swarm. A movement staggers, so only about
+    -- `count x stagger` lights are airborne at any instant -- and asking the
+    -- budget for all 88 at once refuses a flight that never happens. `flyTo`
+    -- re-derives the same front when it actually flies; this is only the gate.
+    local stagger = clamp(number(step.stagger, 1.0), 0.05, 1.0)
+    local front = math.max(1, math.ceil(#run.positions * stagger))
+    local hz, refusal = budgetedRate(front, "effect")
     if hz == nil then
         log("hybrid: the flying half does not fit the budget: %s", tostring(refusal))
         haltRun(run, "hybrid flight over budget")
@@ -1685,8 +1816,14 @@ local function walk(run, steps)
                 goto continue
             end
 
-            local targets = assign(run.positions, poseFor(run.basis, step))
-            if not flyTo(run, targets, number(step.morph, 0)) then return end
+            -- `mapping = "index"` keeps drone i on point i. Two texts in the
+            -- same reading order then flow letter into letter, which is the
+            -- picture the owner asked for; greedy nearest would scatter the
+            -- swarm across the sign and lose the sense of one word becoming
+            -- the next.
+            local pose = poseFor(run.basis, step)
+            local targets = (step.mapping == "index") and pose or assign(run.positions, pose)
+            if not flyTo(run, targets, number(step.morph, 0), step) then return end
             if not run.alive then return end
 
             -- Colour and on/off land on arrival, which is the only place they
@@ -1724,8 +1861,13 @@ local function play(showName, position, bucket, facing)
     if type(position) ~= "table" or position.x == nil then
         return false, "the show needs a position"
     end
+    -- Re-firing a show that is already flying RESTARTS it rather than refusing.
+    -- Refusing is the wrong answer to somebody pressing the button again: they
+    -- want to see it from the top, usually because they have turned round or
+    -- moved. The old swarm is recalled first, so the sky never carries two
+    -- copies -- which is the only thing this guard ever needed to prevent.
     if state.runs[name] ~= nil then
-        return false, ("%s is already in the air"):format(name)
+        haltRun(state.runs[name], "restarted")
     end
 
     -- `Open77.time.monotonic` answers SECONDS; the cooldown is written in
@@ -1779,7 +1921,21 @@ local function play(showName, position, bucket, facing)
     -- the air is spending from the same per-viewer slice. The alternative,
     -- discovering it does not eight seconds in, costs the audience its
     -- session.
-    local hz, refusal = budgetedRate(wantedDrones, style)
+    -- THE FRONT, not the swarm. A staggered morph only ever has
+    -- `count x stagger` drones in flight, and the gate has to price THAT, or
+    -- it refuses the very shows the stagger exists to make affordable: 88
+    -- effect drones at once is 1.3 Hz and under the floor; a front of 14 is
+    -- 8 Hz. The widest front any step asks for is what is gated, and what the
+    -- multi-show accounting charges while this show is up.
+    local front = 0
+    for _, step in ipairs(steps) do
+        if number(step.morph, 0) > 0 then
+            local share = clamp(number(step.stagger, 1.0), 0.05, 1.0)
+            front = math.max(front, math.ceil(wantedDrones * share))
+        end
+    end
+    if front == 0 then front = wantedDrones end
+    local hz, refusal = budgetedRate(front, style)
     if hz == nil then return false, refusal end
 
     -- THE NPC GATE. The style is proven now -- a parade flew in front of the
@@ -1823,6 +1979,9 @@ local function play(showName, position, bucket, facing)
         -- blackout, and a budget that forgot it then would let a second show
         -- in through the gap.
         droneCount = #pose,
+        -- What the multi-show accounting charges: the widest moving front,
+        -- not the swarm. See the gate above.
+        front = front,
         show = name,
         style = style,
         basis = basis,
@@ -1895,8 +2054,9 @@ local function play(showName, position, bucket, facing)
             #run.ids)
     else
         local perUpdate = number(((Config.clock or {}).bytesPerUpdate or {})[style], 555)
-        log("budget: %.1f Hz per drone, %.0f updates/s, %.0f KB/s per viewer, step at most %.2f m",
-            run.hz, run.hz * #run.ids, run.hz * #run.ids * perUpdate / 1024,
+        local moving = math.min(#run.ids, math.max(1, number(run.front, #run.ids)))
+        log("budget: %.1f Hz per drone, %d of %d in flight at once, %.0f updates/s, %.0f KB/s per viewer, step at most %.2f m",
+            run.hz, moving, #run.ids, run.hz * moving, run.hz * moving * perUpdate / 1024,
             stepLimit(style))
     end
 
@@ -1923,12 +2083,43 @@ local function play(showName, position, bucket, facing)
     return true
 end
 
+--- Where a player is facing, in degrees, or nil when the host cannot say.
+---
+--- THIS IS SERVER-SIDE AND LIVE, and it is worth saying why, because a note in
+--- the platform's own playerstate resource says the opposite. That note is
+--- older than the rich read: `Open77.players.get` (since op77.67) reports
+--- `heading` from the player's LAST SNAPSHOT TRANSFORM -- the snapshot header
+--- carries a yaw on the wire -- and it goes stale rather than silent, so the
+--- reading comes with an age. No client half was needed to answer this, which
+--- is why this resource is still server-only.
+---
+--- It is the BODY's heading, not the camera's. In third person the two can
+--- differ by however far the player has turned the camera without moving; for
+--- "in front of where I am looking" that is close enough, and an explicit yaw
+--- still overrides it.
+local function headingOf(playerId)
+    local read = Open77.players.get(playerId)
+    if type(read) ~= "table" then return nil end
+    local heading = number(read.heading, number(read.yaw, nil))
+    if heading == nil then return nil end
+    -- Older than this and the player has probably turned since; fall back to
+    -- the configured facing rather than pointing the show at where they were.
+    if number(read.ageMs, 0) > 5000 then return nil end
+    return heading
+end
+
 --- Fly a show over a player -- the form every other resource actually wants.
+---
+--- FACES THE PLAYER BY DEFAULT. `facing` is taken from where they are looking
+--- unless one is passed; the console form, which has no body, keeps its
+--- explicit yaw. The owner's words: "it should be displayed in front of where
+--- I look, not north by default".
 local function playFor(playerId, showName, facing)
     local id = math.floor(number(playerId, 0))
     if id < 1 then return false, "that is not a player id" end
     local position = Open77.players.position(id)
     if type(position) ~= "table" then return false, "that player has no position yet" end
+    if facing == nil then facing = headingOf(id) end
     return play(showName, position, position.bucket, facing)
 end
 
@@ -2497,7 +2688,8 @@ local function probe(playerId, wanted, standoffOverride)
     -- anywhere else answers a different question. A distance can be passed to
     -- walk it in and out and find where a candidate stops reading.
     local standoff = number(standoffOverride, number((Config.stage or {}).standoff, 45.0))
-    local basis = stageBasis(position, number((Config.stage or {}).facing, 0.0), standoff)
+    local basis = stageBasis(position,
+        number(headingOf(playerId), number((Config.stage or {}).facing, 0.0)), standoff)
     local spot = snap(worldPoint(basis, "stage", { 0.0, 0.0, 0.0 }))
     probeOff()
 

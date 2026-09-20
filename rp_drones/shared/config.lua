@@ -17,7 +17,11 @@ RpDronesConfig = {
     -- One show at a time, and not more often than this. Two shows at once is
     -- two swarms of props on one client, and the client's projection ceiling
     -- is 256 props for EVERYTHING the server owns, not 256 per show.
-    cooldownMs = 15000,
+    -- 0 = no cooldown. It was 15 s and it bought nothing: a show already
+    -- flying is restarted, and one that has ended costs nothing to start
+    -- again. All it did was refuse "played too recently" to somebody standing
+    -- there wanting another look.
+    cooldownMs = 0,
 
     -- =====================================================================
     -- THE SWARM
@@ -77,6 +81,17 @@ RpDronesConfig = {
         --             apply. It was the original default and it was WRONG;
         --             read the block under `light` before choosing it.
         style = "effect",
+
+        -- WHICH SIDE OF THE RIG THE AUDIENCE SEES, in degrees on top of
+        -- nose-on. Every body of a figure is yawed to look back at the person
+        -- the show was fired for, because a drone rig carries its emissives on
+        -- the sensor head and a swarm pointing due north shows eighty-eight
+        -- dark tails to whoever is watching. That was the owner's report --
+        -- "on les voit a l'envers" -- and it is what this number answers.
+        --
+        -- 0 is nose-on. 180 turns the swarm around. Any other value angles it,
+        -- which is occasionally what a stage wants and never what a sign does.
+        yawOffset = 0.0,
 
         -- "npc" style --------------------------------------------------
         --
@@ -271,6 +286,26 @@ RpDronesConfig = {
             -- has put it in the sky.
             lights = {
                 enabled = true,
+
+                -- HOW FAST THE SWARM LIGHTS UP: `sliceSize` lights, then a
+                -- `sliceMs` pause, until the figure is lit.
+                --
+                -- This is not a stylistic choice, it is the fix for the
+                -- half-lit sign the owner photographed on 2026-09-20. The
+                -- client projects the whole effect registry inside one frame;
+                -- eighty-eight new looping effects in one snapshot overran
+                -- that frame's script budget, the projection loop was cut off
+                -- part way, and the lights it never reached were never spawned
+                -- while the retired figure's lights were never stopped. Those
+                -- dead entries kept their slot in the client's per-owner
+                -- effect quota until it started answering `quota_exceeded`.
+                --
+                -- Twelve at a time, 60 ms apart, lights 88 drones in about
+                -- 400 ms and keeps the projector inside its budget. Raise
+                -- `sliceMs` on a busy server; `sliceMs = 0` restores the old
+                -- all-at-once behaviour and the old bug with it.
+                sliceSize = 12,
+                sliceMs = 60,
 
                 -- A NAMED SET, not a single constant.
                 --
@@ -702,7 +737,12 @@ RpDronesConfig = {
     -- which way the show is from you, never whether you see it edge-on.
     stage = {
         -- Yaw in degrees, same convention as a prop's `yaw`: 0 puts the show
-        -- along +Y. Override per cast with `/droneshow <show> <yaw>`.
+        -- along +Y. THIS IS ONLY THE FALLBACK. From chat, a show faces the
+        -- direction the player is looking -- the server reads the body's
+        -- live heading from `Open77.players.get` -- and this value applies
+        -- only when that reading is missing or older than five seconds. The
+        -- console form, which has no body, still takes an explicit yaw, and
+        -- an explicit yaw from chat still overrides the heading.
         facing = 0.00,
         -- HOW FAR THE PICTURE HANGS, AND WHY IT KEPT MOVING CLOSER.
         --
@@ -858,9 +898,21 @@ RpDronesConfig = {
         -- The engine derives the speed limit from this
         -- (`maxSpeed = maxStepMetres x the derived rate`) and STRETCHES any
         -- morph that would exceed it.
+        --
+        -- THE EFFECT LIMIT CHANGED WHEN THE CLIENT DID. 0.6 m was derived for
+        -- a client that TELEPORTED a moved effect, where the step was exactly
+        -- what the eye saw. Base main now interpolates a moved world VFX
+        -- (PR #58), so between two updates the drone is drawn gliding and the
+        -- step is no longer a visible jump -- it is how far behind the server
+        -- the picture runs, and how much a corner gets rounded. 2.0 m at 8 Hz
+        -- is 16 m/s, which is fast for a drone but not a strobe. It is a FIRST
+        -- VALUE under the new client, not a measurement: if a wave through the
+        -- text looks like it is cutting corners, lower it; if the morphs feel
+        -- slow, raise it. The old value is what to go back to on a client
+        -- without the interpolation.
         maxStepMetres = {
             light = 0.6,
-            effect = 0.6,
+            effect = 2.0,
             npc = 2.5,
         },
 
@@ -962,6 +1014,15 @@ RpDronesConfig = {
     --   lit        false hangs the drones dark. Default true.
     --   blackout   npc style only: milliseconds of empty sky before this
     --              figure appears. Defaults to `drone.npc.blackoutMs`.
+    --   reveal     milliseconds over which the figure appears one drone at
+    --              a time along the stroke, instead of all at once.
+    --   mapping    "index" keeps drone i on point i through a morph, so two
+    --              texts in the same reading order flow letter into letter.
+    --              Omitted, drones take the nearest free point (greedy).
+    --   stagger    0..1, the fraction of a morph each drone spends in flight,
+    --              starting in stroke order. Below 1 it is a wave through the
+    --              figure AND a bandwidth saving: only the moving front is
+    --              paid for, and the rate is derived for the front.
     --
     -- A SHOW MAY ALSO CARRY ITS OWN `stage`, overriding any of `standoff`,
     -- `altitude`, `width` and `height` for that show only. A sign is not a
@@ -1021,6 +1082,73 @@ RpDronesConfig = {
             { formation = "heart", place = "stage", morph = 0,     hold = 1200,  color = "blood",   lit = false },
         },
 
+        -- PLAY TEST -> OPEN 77 -> the parade. The owner's words: "displaying
+        -- play test, open77 -- animated if possible like we see the drone
+        -- moving from one text to another, then the parade".
+        --
+        -- EFFECT STYLE, because this one has to TRAVEL. Since the client
+        -- interpolates a moved world VFX (base main, PR #58), a drone the
+        -- server nudges 3-8 times a second is drawn gliding at frame rate --
+        -- so the effect style is now the path for anything that moves, and
+        -- npc bodies remain the path for anything that holds. Flying this
+        -- under `style npc` would cut between the texts instead, which is
+        -- legitimate but is not what was asked for.
+        --
+        -- TWO THINGS MAKE THE TEXT-TO-TEXT FLIGHT READ AS ONE WORD BECOMING
+        -- THE NEXT, and both are per-step fields:
+        --
+        --   mapping = "index"   drone i flies to point i. Both texts are four
+        --                       glyphs over four in the same reading order, so
+        --                       P flows into O, L into P, A into E, Y into N,
+        --                       and TEST flows into 77. Greedy nearest would
+        --                       scatter the swarm across the sign and lose the
+        --                       sense of a word transforming.
+        --
+        --   stagger = 0.3       each drone spends 30% of the morph in flight,
+        --                       starting in stroke order, so a wave runs
+        --                       through the letters rather than the whole
+        --                       swarm lurching at once. That is also the
+        --                       moving-front budget: only ~27 of the 88 are in
+        --                       flight at any instant, and the engine derives
+        --                       the rate for THAT front -- about 4.4 Hz, which
+        --                       the interpolating client draws smooth -- where
+        --                       the whole swarm at once would be 1.3 Hz.
+        --
+        --                       Not narrower: a 15% window made each drone's
+        --                       own flight so short that the speed brake
+        --                       stretched every morph four to seven times.
+        --
+        -- THE MORPH DURATIONS ARE AT THEIR MINIMUMS for that window and the
+        -- 2.0 m step limit: 15, 11, 12, 19 and 17 seconds, because the longest
+        -- single path in each is 26, 18, 21, 32 and 29 metres. Shorten one and
+        -- the engine stretches it back and says so in the log. About 110 s all
+        -- told, which is a show.
+        --
+        -- 88 DRONES, the same count as the sign, so the two can live in one
+        -- config. Both texts read at 88: about 1.9 m and 1.7 m between
+        -- neighbours on the 32 m stage. The generator now relaxes stroke
+        -- junctions apart, so 88 is no longer a lucky number -- every count
+        -- from 64 to 120 clears the stacking guard for every formation.
+        --
+        -- The parade figures that follow are the ring, heart and 77 at 88
+        -- drones -- denser than the 8-drone rehearsal, and a much better
+        -- picture for it. They are greedy-mapped, because a ring has no
+        -- reading order -- but they ARE staggered, and not for the look: 88
+        -- effect drones moving at once is 1.3 Hz, under the floor, and the
+        -- gate refuses it. A 15% front is 8 Hz. The wave runs round the ring
+        -- in its point order, which happens to read well.
+        playtest = {
+            stage = { standoff = 46.0, altitude = 15.0, width = 32.0, height = 24.0 },
+            { formation = "sign_playtest_stacked", place = "stage", morph = 0,
+              hold = 9000, color = "white", reveal = 6000 },
+            { formation = "sign_open77_plain", place = "stage", morph = 15000,
+              hold = 9000, color = "cyan", mapping = "index", stagger = 0.3 },
+            { formation = "ring",  place = "stage", morph = 11000, hold = 4000, color = "cyan",    stagger = 0.3 },
+            { formation = "heart", place = "stage", morph = 12000, hold = 4000, color = "magenta", stagger = 0.3 },
+            { formation = "seventy_seven", place = "stage", morph = 19000, hold = 6000, color = "amber", stagger = 0.3 },
+            { formation = "ring",  place = "stage", morph = 17000, hold = 3000, color = "cyan",    stagger = 0.3 },
+        },
+
         -- THE SIGN DRAWING ITSELF. The same letters, revealed stroke by
         -- stroke instead of appearing whole.
         --
@@ -1036,7 +1164,7 @@ RpDronesConfig = {
         -- and not built -- it depends on the glide, and the glide is still
         -- unmeasured. See the README.
         signdraw = {
-            stage = { standoff = 40.0, altitude = 26.0, width = 32.0, height = 24.0 },
+            stage = { standoff = 46.0, altitude = 15.0, width = 32.0, height = 24.0 },
             { formation = "sign_open77_stacked", place = "stage", morph = 0,
               hold = 14000, color = "cyan", reveal = 8000 },
         },
@@ -1090,7 +1218,7 @@ RpDronesConfig = {
         -- A CUT show, not a flip-book: a sign wants to appear, hold long
         -- enough to be photographed, and go.
         sign = {
-            stage = { standoff = 40.0, altitude = 26.0, width = 32.0, height = 24.0 },
+            stage = { standoff = 46.0, altitude = 15.0, width = 32.0, height = 24.0 },
             { formation = "sign_open77_stacked", place = "stage", morph = 0, hold = 14000, color = "cyan" },
         },
 

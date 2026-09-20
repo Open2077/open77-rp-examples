@@ -153,6 +153,18 @@ GLYPHS: dict[str, tuple[list[Stroke], float]] = {
     "E": ([[(4, 6), (0, 6), (0, 0), (4, 0)], [(0.35, 3), (2.8, 3)]], 4.0),
     "N": ([[(0, 0), (0, 6), (4, 0), (4, 6)]], 4.0),
     "7": ([[(0, 6), (4, 6), (1.2, 0)]], 4.0),
+    # The PLAY TEST set. Every crossbar and stem that meets another stroke is
+    # INSET from it by a third of a unit, for the same reason as the E: a
+    # junction is where the arc-length walk stacks two drones, and the
+    # generator refuses the whole formation when it does.
+    "A": ([[(0, 0), (2, 6), (4, 0)], [(0.85, 2.4), (3.15, 2.4)]], 4.0),
+    "L": ([[(0, 6), (0, 0), (4, 0)]], 4.0),
+    "Y": ([[(0, 6), (2, 3), (4, 6)], [(2, 2.65), (2, 0)]], 4.0),
+    "T": ([[(0, 6), (4, 6)], [(2, 5.65), (2, 0)]], 4.0),
+    # A polyline S: two bowls sharing a spine, drawn as one pen stroke so the
+    # walker spaces it as one line.
+    "S": ([[(4, 5.3), (3, 6), (1, 6), (0, 5), (0, 3.7), (1, 3), (3, 3),
+            (4, 2.3), (4, 1), (3, 0), (1, 0), (0, 0.7)]], 4.0),
     # STEEPER AND TALLER THAN THE CAP HEIGHT, which is how a solidus is told
     # apart from a seven by SHAPE rather than by spacing.
     #
@@ -329,6 +341,60 @@ def spread(strokes: list[Stroke], closed: bool, count: int) -> list[Point]:
     return points[:count]
 
 
+# Below this (normalised units) two drones are one drone. At the 32 m stage the
+# sign hangs on, one unit is 16 m, so this is about 20 cm.
+MIN_GAP = 0.012
+
+
+def relax(points: list[Point], min_gap: float = MIN_GAP, passes: int = 8) -> list[Point]:
+    """Push any two points closer than `min_gap` apart, a little, repeatedly.
+
+    RUNS AFTER `normalise`, and that order is load-bearing: `min_gap` is in
+    normalised units, and a first version ran this in glyph-space units where
+    the same number is a thousandth of a stroke -- it nudged by nothing, and
+    the guard then correctly refused the very counts it was meant to rescue.
+    A point pushed a few thousandths outside [-1, 1] is invisible.
+
+    THE COUNT LOTTERY, and why this exists. Arc-length spreading is exact along
+    ONE stroke, but a glyph is several: a crossbar meets a stem, a curve closes
+    near where the next letter starts. Whether the walker lands a point on each
+    side of a junction or two points on top of it depends on the count -- 88
+    drones stacked a PLAY TEST junction and cleared every OPEN 77 one, and 96
+    did the reverse. A show shares one count across all its figures, so
+    "choose a lucky count" is not available.
+
+    So: after spreading, any pair inside `min_gap` is nudged apart along the
+    line between them, half the deficit each, for a few passes. The moves are
+    a few centimetres at the sizes these are flown at and invisible from the
+    ground, and the letters keep their shape because nothing moves more than
+    it has to. The guard in `main` stays as the final check, now with a
+    threshold that means something.
+    """
+    pts = [list(p) for p in points]
+    for _ in range(passes):
+        moved = False
+        for i in range(len(pts)):
+            for j in range(i + 1, len(pts)):
+                dx = pts[j][0] - pts[i][0]
+                dy = pts[j][1] - pts[i][1]
+                d = math.hypot(dx, dy)
+                if d >= min_gap:
+                    continue
+                moved = True
+                if d < 1e-9:
+                    # Exactly coincident: pick a direction, any direction.
+                    dx, dy, d = 1.0, 0.0, 1.0
+                push = (min_gap - d) / 2.0
+                ux, uy = dx / d, dy / d
+                pts[i][0] -= ux * push
+                pts[i][1] -= uy * push
+                pts[j][0] += ux * push
+                pts[j][1] += uy * push
+        if not moved:
+            break
+    return [(x, y) for x, y in pts]
+
+
 def normalise(points: list[Point]) -> list[Point]:
     """Centre on the origin and scale so the widest axis fills [-1, 1].
 
@@ -361,32 +427,42 @@ def build(count: int) -> list[tuple[str, str, list[Point]]]:
         (
             "grid",
             "The launch pad: a lattice the show rises from and settles back onto.",
-            normalise(grid(count)),
+            relax(normalise(grid(count))),
         ),
         (
             "ring",
             "A circle. The opening shape, and the one that proves the spacing is even.",
-            normalise(spread(ring_strokes, ring_closed, count)),
+            relax(normalise(spread(ring_strokes, ring_closed, count))),
         ),
         (
             "heart",
             "The parametric heart, walked at equal arc length so the lobes match.",
-            normalise(spread(heart_strokes, heart_closed, count)),
+            relax(normalise(spread(heart_strokes, heart_closed, count))),
         ),
         (
             "seventy_seven",
             "77 -- two glyphs, each a bar and a diagonal drawn as one pen stroke.",
-            normalise(spread(digits_strokes, digits_closed, count)),
+            relax(normalise(spread(digits_strokes, digits_closed, count))),
         ),
         (
             "sign_open77",
             "OPEN//77 on one line -- wide and short; wants a lot of drones.",
-            normalise(spread(text_strokes(["OPEN//77"]), False, count)),
+            relax(normalise(spread(text_strokes(["OPEN//77"]), False, count))),
         ),
         (
             "sign_open77_stacked",
             "OPEN over //77 -- twice the stroke height for the same width.",
-            normalise(spread(text_strokes(["OPEN", "//77"]), False, count)),
+            relax(normalise(spread(text_strokes(["OPEN", "//77"]), False, count))),
+        ),
+        (
+            "sign_playtest_stacked",
+            "PLAY over TEST -- the opening card of the playtest show.",
+            relax(normalise(spread(text_strokes(["PLAY", "TEST"]), False, count))),
+        ),
+        (
+            "sign_open77_plain",
+            "OPEN over 77, no slashes -- the shape PLAY TEST flies into.",
+            relax(normalise(spread(text_strokes(["OPEN", "77"]), False, count))),
         ),
     ]
 
@@ -474,10 +550,13 @@ def main(argv: list[str]) -> int:
             for i in range(len(points))
             for j in range(i + 1, len(points))
         )
-        if closest < 1e-4:
+        # Half of MIN_GAP: `relax` should have opened every pair to MIN_GAP,
+        # and normalising can only shrink distances by a bounded factor, so
+        # anything under half is a pair relax could not separate.
+        if closest < MIN_GAP * 0.5:
             raise SystemExit(
-                "%s has two points %.6f apart at %d drones -- a stroke junction is "
-                "stacking them; inset the stroke or change the count"
+                "%s has two points %.4f apart at %d drones after relaxation -- "
+                "a stroke junction is stacking them; inset the stroke"
                 % (name, closest, args.count)
             )
 

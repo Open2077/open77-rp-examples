@@ -71,6 +71,7 @@ standing side by side end up watching two different pictures. A show is a shape
 /droneshow npcprobe off     recall it
 /droneshow npcmove          fly that one drone and measure whether it moved
 /droneshow npcmove off      stop it
+/droneshow playtest         PLAY TEST flies into OPEN 77, then the parade (effect style)
 /droneshow choreo hybrid    npc style: lights fly, bodies hold
 /droneshow choreo flipbook  npc style: redraw between figures
 /droneshow stop <show>      take one show down; bare `stop` takes all
@@ -438,6 +439,98 @@ top of it — it is inset by a third of a unit now, and **the generator refuses
 outright if any two points land closer than a hair**, so the next glyph cannot
 stack drones silently.
 
+### `playtest`: PLAY TEST flies into OPEN 77, then the parade
+
+The owner's words: *"displaying play test, open77 — animated if possible like
+we see the drone moving from one text to another, then the parade"*.
+
+`/droneshow style effect` then `/droneshow playtest`. Six figures, ~95 s:
+`PLAY / TEST` draws itself in over six seconds, holds, then **flies** into
+`OPEN / 77`, holds, then the ring, heart and 77 of the parade at the same 88
+drones.
+
+**Effect style, because it travels.** Base `main` now interpolates a moved
+world VFX on the client (PR #58): a drone the server nudges 3–8 times a second
+is drawn gliding at frame rate. So the effect style is the path for anything
+that moves, and npc bodies remain the path for anything that holds. Under
+`style npc` this show still runs — it cuts between the texts instead.
+
+Two per-step fields make the text-to-text flight read as one word becoming the
+next:
+
+- **`mapping = "index"`** — drone *i* flies to point *i*. Both texts are four
+  glyphs over four in the same reading order, so P flows into O, L into P, A
+  into E, Y into N, and TEST into 77. Greedy nearest would scatter the swarm
+  across the sign.
+- **`stagger = 0.3`** — each drone spends 30% of the morph in flight, starting
+  in stroke order, so a wave runs through the letters instead of the whole
+  swarm lurching. That is also the **moving-front budget made concrete**: only
+  ~27 of the 88 are in flight at any instant, and the engine derives the rate
+  for that front — about 4.4 Hz, which the interpolating client draws smooth —
+  where the whole swarm at once would be 1.3 Hz. **The gate prices the front,
+  not the swarm**: without that, 88 effect drones would be refused at 1.3 Hz
+  before the stagger ever ran.
+
+#### The speed brake changed when the client did
+
+`maxStepMetres.effect` was 0.6 m: how far a drone may jump between two updates,
+derived for a client that *teleported* a moved effect, where the step was
+exactly what the eye saw. With PR #58 the client interpolates, so the step is
+no longer a visible jump — it is how far behind the server the picture runs and
+how much a corner gets rounded. It is now **2.0 m**, a first value under the new
+client and not a measurement: lower it if the wave cuts corners, raise it if the
+morphs feel slow, and go back to 0.6 on a client without the interpolation.
+
+Why it had to move: with a 15% stagger window, each drone's own flight was so
+short that the old brake stretched every morph in `playtest` four to seven
+times. The offline replay caught it before anybody flew it. The shipped morph
+durations (15, 11, 12, 19, 17 s) are the minimums for a 30% window at 2.0 m;
+shorten one and the engine stretches it back and says so.
+
+#### The count, and the end of the count lottery
+
+**88 drones**, the same as the sign, so all three text shows share one config.
+Both texts read at 88: about 1.9 m (PLAY TEST) and 1.7 m (OPEN 77) between
+neighbours on the 32 m stage. The parade figures that follow are denser than
+the 8-drone rehearsal and a better picture for it.
+
+Picking that number used to be luck. Arc-length spreading is exact along one
+stroke, but a glyph is several, and whether the walker lands two drones on top
+of a junction depended on the count — 88 stacked a PLAY TEST junction and
+cleared every OPEN 77 one; 96 did the reverse. **The generator now relaxes
+junctions apart** after normalising: any pair closer than ~19 cm at the sign's
+scale is nudged apart along the line between them, a few centimetres, for a few
+passes. Every count from 64 to 120 now clears the stacking guard for every
+formation, and the guard's threshold finally means something.
+
+One thing paid for once: the first version of that pass ran *before*
+normalising, in glyph-space units against a threshold in normalised units — it
+nudged by nothing, and the tightened guard then correctly refused the very
+counts it was meant to rescue. Order is load-bearing, and the docstring says so.
+
+The font grew `A L Y T S`; every crossbar and stem that meets another stroke is
+inset by a third of a unit, for the same reason as the E.
+
+### The show faces the viewer
+
+`/droneshow <show>` from chat used to face north (`stage.facing = 0`); the admin
+menu passed the camera yaw, chat did not. It now faces **the direction the
+player is looking**, and no client half was needed.
+
+A note in the platform's own `open77_playerstate` resource says there is no
+live heading server-side. **That note is older than the rich read.**
+`Open77.players.get` (since op77.67) reports `heading` from the player's last
+snapshot transform — the snapshot header carries a yaw on the wire
+(`MessageContracts.cs:164`; `LuaResourceRuntime.PlayerReads.cs:347-348`) — and
+it goes stale rather than silent, so the reading comes with an age. Older than
+five seconds and the show falls back to `stage.facing`.
+
+It is the **body's** heading, not the camera's; in third person the two differ
+by however far the camera has been turned without moving. For "in front of
+where I am looking" that is close enough, and an explicit yaw from chat still
+overrides it. The console form, which has no body, keeps its explicit yaw. The
+probes face the viewer the same way.
+
 ### Live motion: bound the concurrency, not the swarm
 
 The owner asked for drones that advance, retreat and flip, and for the sign to
@@ -574,6 +667,74 @@ So a palette name maps to whichever cooked effect is nearest it — red and gree
 blue loot beacon, a candle for amber, and a deliberately blinding lamp for
 white. `magenta` has no match and borrows red; that is stated in the config
 rather than hidden.
+
+### Thirty-five dark drones, and why the server log showed nothing
+
+Measured 2026-09-21, from a photograph the owner sent of the sign: *"pourquoi
+certain sont pas allume"*. The left third of `OPEN//77` was dark hulls; the
+rest was lit. The server log was clean — `88 bodies and 88 lights spawned`,
+every call answered an id.
+
+The truth was in the **client** log, and it names itself:
+
+```
+[open77_effects] effect 4225 rejected: quota_exceeded      (448 of these)
+Open77 script execution budget exceeded
+        open77_effects/client/main.lua:247: in upvalue 'projectLooping'   (19 of these)
+```
+
+The chain, and every link was measured:
+
+1. A figure creates 88 looping effects in one server tick, so they reach the
+   client as **one registry snapshot**.
+2. `open77_effects` projects a snapshot inside a **single frame**. Eighty-eight
+   new records plus the retiring figure's eighty-eight overran that frame's
+   script budget, and the projection loop was cut off part way through.
+3. An aborted pass loses work at *both* ends: the lights it had not reached are
+   never spawned, **and** the retired figure's lights are never stopped.
+4. Those dead entries keep their slot in the client's per-owner effect quota —
+   `kPerOwnerLimit = 192` in `client/src/api/Effects.cpp` — until it starts
+   answering `quota_exceeded` to everything.
+5. From there the failure is self-feeding: every show leaves more dead entries
+   behind than the one before.
+
+The fix is to stop handing the projector a whole figure at once. Lights are
+spawned in **slices** — `lights.sliceSize` of them, then a `lights.sliceMs`
+pause — and a colour change is sliced the same way, because a relight is 88
+stops and 88 starts. Twelve at a time, 60 ms apart, lights eighty-eight drones
+in about 400 ms.
+
+It costs nothing to look at. A swarm that ignites over a third of a second is
+what a drone show does anyway, and a full show — three figures and two colour
+changes, 440 light operations — now runs with **zero** rejections and **zero**
+budget aborts where the same sequence produced 448 and 19.
+
+Two smaller things were wrong in the same place. `despawnAll` walked
+`#run.lightIds`, and one refused light leaves a hole that `#` may stop at,
+which would strand every light after it burning in an empty sky; it walks the
+bodies now. And a slice-spawned ignition can outlive the figure it belongs to,
+so it carries a token and takes its own lights back down when the figure has
+moved on.
+
+### Which side of the drone the audience sees
+
+Measured 2026-09-21, the same evening: *"met les dans le sens inverse les
+drones comme ca on verra leur lumiere violette, la on les vois a l'envers"*.
+
+Every body was spawned at `yaw = 0` — due north — because the *picture* already
+faces the viewer and nothing had made the individual aircraft matter. It does:
+a Bombus rig carries its emissives on the sensor head, so a swarm pointing north
+shows eighty-eight dark tails to an audience standing anywhere else.
+
+The stage basis already knows the answer. Its normal runs from the stage centre
+back to the anchor, so a body whose forward *is* that normal is nose-on to the
+person the show was fired for; inverting `forward(yaw) = (-sin yaw, cos yaw)`
+gives the yaw, and every drone of every figure takes it.
+
+`drone.yawOffset` adds to it. It exists because which end of a rig glows is a
+property of the **art**, not of the maths — four of the nine Bombus appearances
+put a lamp on the sensor head and the rest do not — so turning the swarm around
+is one number in the config rather than a rewrite.
 
 ### Where the picture hangs, and why it kept moving closer
 
@@ -822,6 +983,10 @@ below has been seen.
 - **Whether `visible = false` then `true` is a clean ignition for a VFX.** The
   client stops the effect and plays it fresh, which should read as a flash.
 - **Why the drones blink.** See above — open, with a bisection instrument.
+- **Whether the text-to-text wave reads as one word becoming the next.** The
+  index mapping and the 15% stagger are reasoned, not watched; if the wave
+  reads as scatter, try `stagger = 0.3`, and if the letters lose each other,
+  drop `mapping` and let greedy nearest take over.
 - **Why the drones blinked at 45 m.** One hypothesis is dead; it has not been
   seen since the geometry moved to 24 m. The probe takes a distance when it is.
 - **Whether the landing lights read at 24 m.** Every alias in the colour map
