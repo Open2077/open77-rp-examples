@@ -47,6 +47,8 @@ With matching client, server and animation assets, the experimental native
 adapter estimates mouth contact from the item's geometry for `drink_walk`,
 `bottle_walk`, `smoke_walk` and `cigar_walk`. Omit `itemContact` for this automatic
 behavior. `hold_item_walk` only holds the item; it does not fit it to the mouth.
+Container contact uses the end along the item's authored local up direction
+(the can rim), keeping that end as it tilts. Smoking uses the nearest end.
 
 An unusual inventory model can supply a measured contact point without moving
 its authored grip:
@@ -81,11 +83,14 @@ owns bar gameplay; `rp_phone` owns call state. All use the shared animation API.
 No new per-job attachment lifecycle is necessary. Their existing stock walking
 profiles continue working without `options.item` or configuration changes.
 
-First-person hands/can have been observed in the experimental base client.
-Drink-to-mouth alignment, cigarette visibility, combat cleanup and female body
-coverage remain under validation. Do not treat a successful server call as proof
-that every animation phase renders correctly. Phone and other gestures do not
-yet have the new first-person adapter.
+The experimental first-person adapter shows hands/items for the can, bottle,
+cigarette, cigar and hold profiles on the tested female body. It keeps the item
+visible at the lower right between sips and follows the camera during contact.
+Hold → drink → hold preserves the item; completion removes it. Punching cancels
+the layer and item, and replay creates a fresh presentation. Male bodies, other
+appearances and custom shapes remain under validation. A successful server call
+does not prove that every phase renders correctly. Phone and other gestures do
+not have the new first-person adapter.
 
 For full options, errors and lifecycle rules see the public
 [RP animation guide](https://open2077.net/docs/rp-animations#animation-owned-items-one-server-call).
