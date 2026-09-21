@@ -51,6 +51,7 @@ local Formations = RpDronesFormations
 -- `choreo` commands, and the note on why in `style`.
 local STYLE_KEY = "droneshow:style"
 local CHOREO_KEY = "droneshow:choreography"
+local STAGE_KEY = "droneshow:stage"
 local GUARD_KEY = "droneshow:sweepguard"
 local FRAME_KEY = "droneshow:framems"
 
@@ -224,16 +225,35 @@ end
 --- hang further back to fit in the frame, and forcing the global stage to suit
 --- it would ruin every other show. So a show may carry a `stage` table and
 --- override only what it cares about.
+--- A RUNTIME OVERRIDE BEATS BOTH, and that is deliberate.
+---
+--- `stage.standoff = 24` is right for the way a drone show is normally watched
+--- -- standing under it, head back, the figure filling the view. It is wrong
+--- the moment a CAMERA watches from behind a seated player: the frame no longer
+--- follows the eye, and a 22 m figure at 24 m spans about 49 degrees with its
+--- top well outside the shot. The owner's words, on the first take: "on voit
+--- que la moitie".
+---
+--- Moving the whole config for one camera setup would be the wrong trade, and
+--- so would baking filming geometry into a show. `droneshow stage <standoff>
+--- <altitude> <width> <height>` sets it for the session instead, persisted like
+--- the style, and `droneshow stage off` gives every show its own geometry back.
 local function stageOf(steps)
     local base = Config.stage or {}
     local own = type(steps) == "table" and type(steps.stage) == "table" and steps.stage or nil
-    if own == nil then return base end
+    local forced = state.stage
+    local function pick(key, fallback)
+        if forced ~= nil and forced[key] ~= nil then return number(forced[key], fallback) end
+        if own ~= nil and own[key] ~= nil then return number(own[key], fallback) end
+        return number(base[key], fallback)
+    end
+    if own == nil and forced == nil then return base end
     return {
-        facing = number(own.facing, base.facing),
-        standoff = number(own.standoff, base.standoff),
-        altitude = number(own.altitude, base.altitude),
-        width = number(own.width, base.width),
-        height = number(own.height, base.height),
+        facing = pick("facing", 0.0),
+        standoff = pick("standoff", 24.0),
+        altitude = pick("altitude", 16.0),
+        width = pick("width", 22.0),
+        height = pick("height", 22.0),
     }
 end
 
@@ -2814,6 +2834,40 @@ RegisterCommand(Config.command or "droneshow", function(source, args)
                 or "cut between figures."))
     end
 
+    if first == "stage" then
+        local wanted = tostring(args[2] or ""):lower()
+        if wanted == "off" or wanted == "reset" then
+            state.stage = nil
+            Open77.kvp.set(STAGE_KEY, "")
+            log("stage override cleared (persisted)")
+            return say(source, "Stage override cleared: every show uses its own geometry again.")
+        end
+        local standoff = tonumber(args[2])
+        local altitude = tonumber(args[3])
+        local width = tonumber(args[4])
+        local height = tonumber(args[5])
+        if standoff == nil or altitude == nil or width == nil or height == nil then
+            local forced = state.stage
+            return say(source, ("Usage: %s stage <standoff> <altitude> <width> <height> | %s stage off. Now: %s"):format(
+                Config.command or "droneshow", Config.command or "droneshow",
+                forced == nil and "each show's own geometry"
+                    or ("%.0f m out, %.0f m up, %.0f x %.0f m"):format(
+                        forced.standoff, forced.altitude, forced.width, forced.height)))
+        end
+        state.stage = {
+            standoff = clamp(standoff, 5.0, 400.0),
+            altitude = clamp(altitude, -50.0, 200.0),
+            width = clamp(width, 4.0, 200.0),
+            height = clamp(height, 4.0, 200.0),
+        }
+        Open77.kvp.set(STAGE_KEY, ("%.2f,%.2f,%.2f,%.2f"):format(
+            state.stage.standoff, state.stage.altitude, state.stage.width, state.stage.height))
+        log("stage override: %.0f m out, %.0f m up, %.0f x %.0f m (persisted)",
+            state.stage.standoff, state.stage.altitude, state.stage.width, state.stage.height)
+        return say(source, ("Every show now hangs %.0f m out, %.0f m up, %.0f x %.0f m."):format(
+            state.stage.standoff, state.stage.altitude, state.stage.width, state.stage.height))
+    end
+
     if first == "lightbench" then
         if args[2] == "off" then
             local taken = benchOff()
@@ -2952,6 +3006,19 @@ AddEventHandler("onResourceStart", function(name)
     end
     local savedFrame = tonumber(Open77.kvp.get(FRAME_KEY))
     if savedFrame ~= nil then state.frameMs = math.floor(clamp(savedFrame, 1, 10000)) end
+    local savedStage = tostring(Open77.kvp.get(STAGE_KEY) or "")
+    if savedStage ~= "" then
+        local a, b, c, d = savedStage:match("^([^,]+),([^,]+),([^,]+),([^,]+)$")
+        if a ~= nil and tonumber(a) ~= nil and tonumber(b) ~= nil
+            and tonumber(c) ~= nil and tonumber(d) ~= nil then
+            state.stage = {
+                standoff = clamp(tonumber(a), 5.0, 400.0),
+                altitude = clamp(tonumber(b), -50.0, 200.0),
+                width = clamp(tonumber(c), 4.0, 200.0),
+                height = clamp(tonumber(d), 4.0, 200.0),
+            }
+        end
+    end
 
     local shows = {}
     for showName in pairs(Config.shows or {}) do shows[#shows + 1] = showName end
