@@ -161,8 +161,13 @@ local function play(showName, position, bucket)
     -- repository; the cooldown is configured in milliseconds because that is
     -- the unit the cues are written in, so one of the two has to convert.
     local now = Open77.time.monotonic() * 1000.0
-    if state.running then return false, "a show is already running" end
-    if now - state.lastAt < number(Config.cooldownMs, 20000) then
+    -- A NEW SHOW REPLACES THE RUNNING ONE rather than being refused. Refusing
+    -- was the safe reading of "one show at a time", and it is the wrong one for
+    -- an operator: the answer to "fire it now" is never "no, something else is
+    -- still going". Bumping the epoch stops the old cue thread at its next
+    -- beat, which is the same mechanism `stop` uses.
+    if state.running then state.epoch = state.epoch + 1 end
+    if now - state.lastAt < number(Config.cooldownMs, 0) then
         return false, "the last show was too recent"
     end
 
@@ -183,9 +188,34 @@ local function play(showName, position, bucket)
 end
 
 --- Fire a show over a player -- the form every other resource actually wants.
-local function playFor(playerId, showName)
+---
+--- `standoff` puts the centre that many metres AHEAD of where they are looking
+--- instead of on their head, and it exists because of a framing measurement: a
+--- shell's elevation from a camera is `height / distance`, so a burst fired
+--- over the viewer is at 45 degrees and half of it is out of shot, while the
+--- same burst a hundred metres out sits at 15 and reads as a firework in the
+--- sky. It is also what puts the shells BEHIND a drone show rather than on top
+--- of the audience. Omitted or zero keeps the old behaviour.
+local function playFor(playerId, showName, standoff)
     local position = Open77.players.position(playerId)
     if type(position) ~= "table" then return false, "that player has no position yet" end
+    local distance = number(standoff, 0.0)
+    if distance > 0.0 then
+        -- The heading comes from the player record; without one the show still
+        -- fires, over them, rather than refusing.
+        local read = Open77.players.get(playerId)
+        local heading = type(read) == "table"
+            and number(read.heading, number(read.yaw, nil)) or nil
+        if heading ~= nil then
+            local radians = math.rad(heading)
+            position = {
+                x = number(position.x, 0.0) - math.sin(radians) * distance,
+                y = number(position.y, 0.0) + math.cos(radians) * distance,
+                z = number(position.z, 0.0),
+                bucket = position.bucket,
+            }
+        end
+    end
     return play(showName, position, position.bucket)
 end
 
@@ -206,7 +236,7 @@ end
 --   exports.rp_fireworks:playFor(playerId, "celebration")
 --   exports.rp_fireworks:play("burst", { x = ..., y = ..., z = ... }, 0)
 exports("play", play)
-exports("playFor", playFor)
+exports("playFor", playFor)   -- (playerId, show, standoffMetres)
 exports("stop", stop)
 
 -- Restricted (`RegisterCommand(..., true)`): the platform refuses a player
@@ -231,7 +261,9 @@ RegisterCommand(Config.command or "fireworks", function(source, args)
         local okConsole, reasonConsole = play(wanted, { x = x, y = y, z = z }, tonumber(args[5]) or 0)
         return log("%s", okConsole and "show started" or ("no show: " .. tostring(reasonConsole)))
     end
-    local ok, reason = playFor(source, wanted)
+    -- `/fireworks <show> [metres]` -- the second argument pushes the centre
+    -- that far ahead of where the player is looking. See `playFor`.
+    local ok, reason = playFor(source, wanted, tonumber(args[2]))
     if not ok then return say(source, "No show: " .. reason) end
     say(source, "Lighting up the sky.")
 end, true)
