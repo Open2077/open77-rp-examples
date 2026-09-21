@@ -1067,7 +1067,18 @@ RpDronesConfig = {
         -- seconds of holds. This one runs about a minute and a half, and the
         -- extra minute is entirely relights.
         open77 = {
-            { formation = "ring",          place = "stage", morph = 0,     hold = 1500,  color = "cyan",    lit = false },
+            -- IT OPENS ON THE NAME. The sign formation was already generated
+            -- and only the `sign` show used it, so the showcase never said what
+            -- it was a showcase of. It leads now: dark for a beat, then the
+            -- letters light, then a colour, and only then the figures.
+            --
+            -- It rides the same stage as the rest of the show rather than the
+            -- `sign` show's own 46 m one, which is why it is 34 m wide here and
+            -- still reads: the mark is the LIGHT, and the light is much smaller
+            -- than the body carrying it.
+            { formation = "sign_open77_stacked", place = "stage", morph = 0, hold = 1200,  color = "cyan", lit = false },
+            { formation = "sign_open77_stacked", place = "stage", morph = 0, hold = 11000, color = "cyan" },
+            { formation = "sign_open77_stacked", place = "stage", morph = 0, hold = 8000,  color = "acid" },
             { formation = "ring",          place = "stage", morph = 0,     hold = 7000,  color = "cyan" },
             { formation = "ring",          place = "stage", morph = 0,     hold = 6000,  color = "acid" },
             { formation = "heart",         place = "stage", morph = 15000, hold = 10000, color = "magenta" },

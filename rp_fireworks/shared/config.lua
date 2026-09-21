@@ -305,69 +305,120 @@ RpFireworksConfig = {
         --    use at the peak of the show and the finale -- which starts at
         --    79.6 s, when the drones go dark and hand back their 88 -- can be
         --    three times denser than the detuned version this replaces.
+        -- THE SCORE FOR A DRONE SHOW: timing, geometry, rhythm and a budget.
+        --
+        -- Four owner verdicts built this, each one killing the previous easy
+        -- answer, and they are worth keeping in order.
+        --
+        -- 1. TIMING. Firing presets by hand cannot cover a long show -- each
+        --    plays out in 9 to 15 seconds and the rest is silence. So this is
+        --    ONE score, fired in the same breath as `rp_drones`' `open77`
+        --    (measured 67 ms apart) and written against its beats under the cut
+        --    driver, recomputed from its step durations:
+        --
+        --      0.0 s  OPEN//77 lights up      21.4 s  the ring
+        --     12.2 s  the sign turns green    28.4 s  the ring turns green
+        --     35.6 s  the heart               45.6 s  the heart turns red
+        --     55.8 s  the 77                  66.8 s  the 77 turns white
+        --     74.8 s  the 77 turns green      84.0 s  the ring returns
+        --     92.0 s  the ring turns magenta  99.0 s  the drones go dark
+        --
+        -- 2. GEOMETRY. A shell's elevation from a fixed camera is
+        --    `height / distance`, and a frame crops near 25 degrees, so every
+        --    cue obeys `height <= 0.45 x distance`. From a centre about 105 m
+        --    out these land 60 to 150 m away at 12 to 30 m up: whole bursts
+        --    inside the frame, and behind a drone figure hanging at 58 m and
+        --    15 m up. The finale widens SIDEWAYS, never closer -- closer is the
+        --    one direction that cannot stay in shot.
+        --
+        -- 3. RHYTHM. Even at a rate the quota allowed, volleys three seconds
+        --    apart still left the sky empty between them: a shell fades in
+        --    about two. The pulse is regular -- a small volley every 1.6 s --
+        --    rather than bunched.
+        --
+        -- 4. BUDGET. A one-shot shell holds a slot in the client's per-owner
+        --    effect quota while it burns, and every server-driven effect shares
+        --    one owner, including the 88 landing lights of the drone show.
+        --    Measured across takes: 113 refusals, then 38, then 0. The finale
+        --    opens at 99.6 s, when the drones go dark and hand back their 88
+        --    slots -- that is the only reason it can be this dense, and exactly
+        --    why it starts there and not earlier.
         open77sync = {
-            { at = 0, count = 7, spreadMs = 190, radius = 46.0, minHeight = 13.0, maxHeight = 26.0, sound = "sq024_race_start_fireworks" },
-            { at = 1600, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
+            { at = 0, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
+            { at = 1200, count = 8, spreadMs = 190, radius = 46.0, minHeight = 13.0, maxHeight = 26.0, sound = "sq024_race_start_fireworks" },
             { at = 3200, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
             { at = 4800, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
             { at = 6400, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
-            { at = 8500, count = 7, spreadMs = 190, radius = 46.0, minHeight = 13.0, maxHeight = 26.0, sound = "sq024_race_start_fireworks" },
+            { at = 8000, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
             { at = 9600, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
             { at = 11200, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
-            { at = 12800, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
+            { at = 12200, count = 7, spreadMs = 190, radius = 46.0, minHeight = 13.0, maxHeight = 26.0, sound = "sq024_race_start_fireworks" },
             { at = 14400, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
-            { at = 15700, count = 9, spreadMs = 190, radius = 46.0, minHeight = 13.0, maxHeight = 26.0, sound = "sq024_race_start_fireworks" },
+            { at = 16000, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
             { at = 17600, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
             { at = 19200, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
-            { at = 20800, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
+            { at = 21400, count = 8, spreadMs = 190, radius = 46.0, minHeight = 13.0, maxHeight = 26.0, sound = "sq024_race_start_fireworks" },
             { at = 22400, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
             { at = 24000, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
-            { at = 25700, count = 8, spreadMs = 190, radius = 46.0, minHeight = 13.0, maxHeight = 26.0, sound = "sq024_race_start_fireworks" },
+            { at = 25600, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
             { at = 27200, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
-            { at = 28800, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
+            { at = 28400, count = 7, spreadMs = 190, radius = 46.0, minHeight = 13.0, maxHeight = 26.0, sound = "sq024_race_start_fireworks" },
             { at = 30400, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
             { at = 32000, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
             { at = 33600, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
-            { at = 35900, count = 9, spreadMs = 190, radius = 46.0, minHeight = 13.0, maxHeight = 26.0, sound = "sq024_race_start_fireworks" },
+            { at = 35600, count = 9, spreadMs = 190, radius = 46.0, minHeight = 13.0, maxHeight = 26.0, sound = "sq024_race_start_fireworks" },
             { at = 36800, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
             { at = 38400, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
             { at = 40000, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
             { at = 41600, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
             { at = 43200, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
             { at = 44800, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
-            { at = 46900, count = 8, spreadMs = 190, radius = 46.0, minHeight = 13.0, maxHeight = 26.0, sound = "sq024_race_start_fireworks" },
+            { at = 46400, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
             { at = 48000, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
             { at = 49600, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
             { at = 51200, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
             { at = 52800, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
-            { at = 54900, count = 8, spreadMs = 190, radius = 46.0, minHeight = 13.0, maxHeight = 26.0, sound = "sq024_race_start_fireworks" },
-            { at = 56000, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
+            { at = 54400, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
+            { at = 55800, count = 9, spreadMs = 190, radius = 46.0, minHeight = 13.0, maxHeight = 26.0, sound = "sq024_race_start_fireworks" },
             { at = 57600, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
             { at = 59200, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
             { at = 60800, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
             { at = 62400, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
-            { at = 64100, count = 9, spreadMs = 190, radius = 46.0, minHeight = 13.0, maxHeight = 26.0, sound = "sq024_race_start_fireworks" },
+            { at = 64000, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
             { at = 65600, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
-            { at = 67200, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
+            { at = 66800, count = 8, spreadMs = 190, radius = 46.0, minHeight = 13.0, maxHeight = 26.0, sound = "sq024_race_start_fireworks" },
             { at = 68800, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
             { at = 70400, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
-            { at = 72100, count = 8, spreadMs = 190, radius = 46.0, minHeight = 13.0, maxHeight = 26.0, sound = "sq024_race_start_fireworks" },
+            { at = 72000, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
             { at = 73600, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
-            { at = 75200, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
+            { at = 74800, count = 8, spreadMs = 190, radius = 46.0, minHeight = 13.0, maxHeight = 26.0, sound = "sq024_race_start_fireworks" },
             { at = 76800, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
+            { at = 78400, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
+            { at = 80000, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
+            { at = 81600, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
+            { at = 83200, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
+            { at = 84800, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
+            { at = 86400, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
+            { at = 88000, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
+            { at = 89600, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
+            { at = 91200, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
+            { at = 92800, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
+            { at = 94400, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
+            { at = 96000, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
+            { at = 97600, count = 4, spreadMs = 260, radius = 38.0, minHeight = 13.0, maxHeight = 26.0 },
 
             -- THE FINALE: the drones are gone, their 88 slots are free.
-            { at = 79600, count = 12, spreadMs = 170, radius = 50.0, minHeight = 13.0, maxHeight = 27.0, sound = "sq024_race_start_fireworks" },
-            { at = 82400, count = 13, spreadMs = 165, radius = 54.0, minHeight = 13.0, maxHeight = 27.0, sound = "sq024_race_start_fireworks" },
-            { at = 85200, count = 14, spreadMs = 160, radius = 56.0, minHeight = 13.0, maxHeight = 28.0, sound = "sq024_race_start_fireworks" },
-            { at = 88200, count = 15, spreadMs = 155, radius = 58.0, minHeight = 12.0, maxHeight = 28.0, sound = "sq024_race_start_fireworks" },
-            { at = 91200, count = 16, spreadMs = 150, radius = 60.0, minHeight = 12.0, maxHeight = 29.0, sound = "sq024_race_start_fireworks" },
-            { at = 94400, count = 18, spreadMs = 145, radius = 62.0, minHeight = 12.0, maxHeight = 29.0, sound = "sq024_race_start_fireworks" },
-            { at = 97800, count = 18, spreadMs = 140, radius = 64.0, minHeight = 12.0, maxHeight = 30.0, sound = "sq024_race_start_fireworks" },
-            { at = 101200, count = 18, spreadMs = 140, radius = 60.0, minHeight = 12.0, maxHeight = 29.0, sound = "sq024_race_start_fireworks" },
-            { at = 104600, effect = "confetti", count = 6, spreadMs = 260, radius = 18.0, minHeight = 9.0, maxHeight = 15.0 },
-            { at = 105600, effect = "petals", count = 5, spreadMs = 280, radius = 16.0, minHeight = 10.0, maxHeight = 16.0 },
-            { at = 106800, count = 14, spreadMs = 150, radius = 56.0, minHeight = 13.0, maxHeight = 28.0, sound = "sq024_race_start_fireworks" },
+            { at = 99600, count = 12, spreadMs = 170, radius = 50.0, minHeight = 13.0, maxHeight = 27.0, sound = "sq024_race_start_fireworks" },
+            { at = 102400, count = 13, spreadMs = 165, radius = 54.0, minHeight = 13.0, maxHeight = 27.0, sound = "sq024_race_start_fireworks" },
+            { at = 105200, count = 14, spreadMs = 160, radius = 56.0, minHeight = 13.0, maxHeight = 28.0, sound = "sq024_race_start_fireworks" },
+            { at = 108200, count = 15, spreadMs = 155, radius = 58.0, minHeight = 12.0, maxHeight = 28.0, sound = "sq024_race_start_fireworks" },
+            { at = 111200, count = 16, spreadMs = 150, radius = 60.0, minHeight = 12.0, maxHeight = 29.0, sound = "sq024_race_start_fireworks" },
+            { at = 114400, count = 18, spreadMs = 145, radius = 62.0, minHeight = 12.0, maxHeight = 29.0, sound = "sq024_race_start_fireworks" },
+            { at = 117800, count = 18, spreadMs = 140, radius = 64.0, minHeight = 12.0, maxHeight = 30.0, sound = "sq024_race_start_fireworks" },
+            { at = 121200, count = 18, spreadMs = 140, radius = 60.0, minHeight = 12.0, maxHeight = 29.0, sound = "sq024_race_start_fireworks" },
+            { at = 124600, effect = "confetti", count = 6, spreadMs = 260, radius = 18.0, minHeight = 9.0, maxHeight = 15.0 },
+            { at = 125600, effect = "petals", count = 5, spreadMs = 280, radius = 16.0, minHeight = 10.0, maxHeight = 16.0 },
+            { at = 126800, count = 14, spreadMs = 150, radius = 56.0, minHeight = 13.0, maxHeight = 28.0, sound = "sq024_race_start_fireworks" },
         },
     },
 
