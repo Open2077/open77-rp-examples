@@ -2,11 +2,11 @@
 
 An opt-in administrator weapon workshop with an English WebUI and the bundled Freeroam theme. Browse 137 firearm records, equip a weapon, adjust native tuning, refill ammunition and test vehicle-impact impulses.
 
-**Requires a compatible development client containing `Open77.weapons.setTuning`, `clearTuning` and `tuning`.** The resource checks native availability and reports an unsupported client when the functions are missing. Installing Lua files does not upgrade the client DLL.
+**Requires a compatible development client containing `Open77.weapons.setTuning`, `clearTuning`, `tuning` and the inventory-instance restoration fix.** The resource checks native availability and reports an unsupported client when the functions are missing. Function availability alone does not distinguish older experimental builds. Installing Lua files does not upgrade the client DLL.
 
-**Experimental:** gameplay validation of the six advanced stat controls and restoration after holstering is still in progress. Verify actual weapon behavior and cleanup state; native stat readback alone is not a gameplay result.
+**Experimental controls:** projectile count and smart-projectile speed expose native statistics, but their actual projectile multiplicity and flight-speed effects remain unverified. Aim speed supplies native animation timings, without a frame-accurate visual duration guarantee. Verify actual weapon behavior and cleanup state; native stat readback alone is not a gameplay result.
 
-**Known issue under investigation:** clearing tuning while a weapon is holstered, then replacing it, can leave its old modifiers applied when it is equipped again. Use **Restore stock while the weapon is drawn, before switching weapons**. An `idle` status or zero modifier count does not rule out this issue.
+Cleanup can be deferred while a weapon is holstered. The corrected client tracks the exact inventory item across replacement engine entities and finishes removing its modifiers when that item is drawn again. Read `pendingModifiers` before reporting cleanup complete.
 
 ## Install and open
 
@@ -43,7 +43,7 @@ if state then print(state.status, state.active) end
 Open77.weapons.clearTuning()
 ```
 
-Each `setTuning` call replaces the full profile; omitted fields reset to defaults. It does not equip the weapon or rewrite its shared TweakDB record. One resource owns tuning at a time. Stop/reset releases that profile, but a holstered weapon can require deferred cleanup. `restoring`, `waiting_for_restore` and `pendingModifiers` report that queue; they cannot detect the known cached-modifier issue after replacing a holstered weapon. Restore stock while the tuned weapon is drawn before switching.
+Each `setTuning` call replaces the full profile; omitted fields reset to defaults. It does not equip the weapon or rewrite its shared TweakDB record. One resource owns tuning at a time. Stop/reset releases that profile, but a holstered weapon can require deferred cleanup. `restoring`, `waiting_for_restore` and `pendingModifiers` report that queue. Exact handles are retained even after the old engine entity disappears and removed when the same inventory item is drawn again. A different copy of the same weapon record does not complete that cleanup. The queue is bounded to 32 pending bindings.
 
 ## Commands
 
@@ -77,6 +77,9 @@ All commands use the same administrator ACL and target the requesting player:
 - Impulse counters report queued events, not measured vehicle movement. No extra explosion VFX is generated.
 - Advanced native stats are weapon-dependent. Readback does not prove that each weapon's animation or projectile code uses the value. Power/tech weapons do not gain smart behavior; projectile types cannot be replaced.
 - Magazine capacity and projectile count increases are rounded and capped at 512 rounds and 64 projectiles, preserving any higher pre-existing count. Increasing capacity does not add ammunition; inspect the real magazine before filling it.
+- Perform a real reload after changing magazine capacity or restoring stock: the loaded magazine can retain its previous capacity until reloaded. Read `snapshot()` again before using `setAmmo()`.
+- Native damage can increase vehicle health loss, but final damage also depends on hit location and vanilla rules; the multiplier does not guarantee the same ratio in final health loss.
+- Charge speed changes the time to the weapon's existing firing threshold. It does not raise its authored charge ceiling or guarantee an exact timing ratio across weapons.
 - Server damage policy remains authoritative. Raw player-hit damage reports above 300 are rejected; the native damage multiplier does not bypass that cap.
 - Weapon assignments and ammunition remain in the inventory after reset/stop. Only tuning modifiers are restored.
 
