@@ -1,13 +1,13 @@
 # Open77 RP examples — a Night City roleplay server in Lua
 
-Thirty-five gameplay resources and four lab helpers for [Open77](https://open2077.net), the
+Thirty-five gameplay resources and five lab helpers for [Open77](https://open2077.net), the
 Cyberpunk 2077 multiplayer platform. Together they run a complete roleplay server: identity,
 money, inventory, twelve jobs with real runs, housing with real apartment doors, shops, a
 bank, garages, gangs, crime, NCPD, a phone, a radio, zones and ambiance — all placed on real
 Night City landmarks (Kabuki Market, the Afterlife, Viktor's clinic, Westbrook Motors, the
 Rancho Coronado junkyard, the Aldecaldos camp…).
 
-Every resource was written by coding agents that had only the
+The original roleplay set was written by coding agents that had only the
 [Open77 Devkit MCP](https://github.com/Open2077/open77-devkit), then played on a real server.
 Take them as they are, take one job as a starting point, or read them to see how the platform
 API is used for real: every folder has its own `README.md` with the commands, the config keys,
@@ -33,7 +33,7 @@ visuals, holding versus drinking, permissions and current first-person limits.
 | World | `rp_zones`, `rp_ambiance`, `rp_shops` (kiosks + vendors), `rp_bank` (ATMs), `rp_garage`, `rp_housing` (five real flats, doors found through `open77_doors`), `rp_needs` (hunger/thirst/fatigue), `rp_phone`, `rp_radio`, `rp_vigile` (security), `rp_fireworks` (synchronized shows) |
 | Crime | `rp_crime` (lockpick, shop robbery, dealer, fence), `rp_gangs` (territories, street market) |
 | Spectacle | `rp_fireworks` (synchronized shows), `rp_drones` (a drone light show: real drone bodies held in the sky, an OPEN//77 sign, cut and flip-book choreography) |
-| Lab helpers | `rp_selftest` (33 checks, console `selftest`), `rp_taxitest` (`groundz`), `rp_worldprobe` (`wprobe`, `vwarp`), `eval_taxi` (the first taxi) |
+| Lab helpers | `rp_selftest` (33 checks, console `selftest`), `rp_taxitest` (`groundz`), `rp_worldprobe` (`wprobe`, `vwarp`), `eval_taxi` (the first taxi), [`rp_weapons_effect`](rp_weapons_effect) (English weapon workshop, `/weaponeffects`) |
 
 **`rp_fireworks` is the short one to read first.** Two hundred lines of server
 Lua, no client code, and it is the example for "everybody sees the same thing at
@@ -58,6 +58,11 @@ See [walking actions and inventory items](docs/walking-actions.md) for job integ
 interruption cleanup and the current first-person limitation.
 
 ## Running the set
+
+The optional [weapon workshop](rp_weapons_effect/README.md) requires a compatible
+development client with native weapon tuning. It is disabled by default and does
+not depend on the RP database stack. See [Weapon customization](https://open2077.net/docs/weapon-customization)
+for supported controls, Lua examples and vehicle physics ownership.
 
 1. An Open77 server on the current `main` build (the carry animation layer and the loot fixes
    landed in September 2026 releases) with MariaDB configured: every resource persists through
