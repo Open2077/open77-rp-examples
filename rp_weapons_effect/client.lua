@@ -3,6 +3,7 @@ local menu, opened, authorized = nil, false, false
 local pending = {}
 local measureUntil, measureId = 0, nil
 local profile, profileRevision = nil, 0
+local approvedVersion
 local function supportsTuning()
     return type(Open77.weapons.setTuning) == "function" and type(Open77.weapons.tuning) == "function"
         and type(Open77.weapons.clearTuning) == "function"
@@ -54,12 +55,12 @@ RegisterNetEvent("rp_weapons_effect:approved", function(value)
     elseif value.action == "apply" then
         if not supportsTuning() then return result(false,"This client needs native weapon tuning support. Please update it.") end
         local ok, reason = Open77.weapons.setTuning(value.record, value.tuning)
-        if ok then profileRevision=profileRevision+1; profile={record=value.record, tuning=value.tuning} end
+        if ok then profileRevision=profileRevision+1; profile={record=value.record, tuning=value.tuning}; approvedVersion=value.version end
         result(ok, reason or "Settings saved. Draw this weapon to apply them."); state()
     elseif value.action == "reset" then
         if not supportsTuning() then return result(false,"This client needs native weapon tuning support. Please update it.") end
         local ok, reason = Open77.weapons.clearTuning()
-        if ok then profileRevision=profileRevision+1; profile=nil end
+        if ok then profileRevision=profileRevision+1; profile=nil; approvedVersion=nil end
         result(ok, reason or "Reset requested. Holstered weapons will finish restoring when drawn."); state()
     elseif value.action == "equip" then
         request("equip", Open77.weapons.assign(value.record, 1, {active=true}))
@@ -75,6 +76,15 @@ RegisterNetEvent("rp_weapons_effect:approved", function(value)
     elseif value.action == "state" then
         print("[rp_weapons_effect] state=" .. json.encode(state() or {}))
     end
+end)
+AddEventHandler("open77:weaponBlast", function(owner,record,sequence,x,y,z)
+    if owner~=GetCurrentResourceName() or not profile or record~=profile.record or not approvedVersion then return end
+    TriggerServerEvent("rp_weapons_effect:blast", {record=record,version=approvedVersion,
+        sequence=tonumber(sequence),x=tonumber(x),y=tonumber(y),z=tonumber(z)})
+end)
+RegisterNetEvent("rp_weapons_effect:blastResult", function(value)
+    send("weapons:characters",value)
+    print("[rp_weapons_effect] character blast="..json.encode(value))
 end)
 AddEventHandler("open77:weapons:completed", function(id, operation, ok, reason)
     if tostring(id) == measureId then measureId=nil end

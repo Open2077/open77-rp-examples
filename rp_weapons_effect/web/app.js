@@ -78,13 +78,13 @@
     const stats=value.stats||{};
     rows('stats',[['Reload',stats.reloadTime],['Empty reload',stats.emptyReloadTime],['Shot cycle',stats.cycleTime],['Maximum recoil',stats.recoilKickMax],['Spread X',stats.spreadMaxX]].map(([k,v])=>[k,Number.isFinite(v)?v.toFixed(3):'—']));
     rows('extra-stats',window.WeaponWorkshopExtras.statRows(stats));
-    rows('counters',[['Blasts',value.blasts||0],['Queued impulses',value.impulsesQueued||0],['Other owner',value.foreignSkipped||0],['Failures',value.failures||0]]);
+    rows('counters',[['Blasts',value.blasts||0],['Projectile contacts',value.projectileContacts||0],['Queued car impulses',value.impulsesQueued||0],['Other car owner',value.foreignSkipped||0],['Failures',value.failures||0]]);
     if (Number.isFinite(value.blasts) && value.blasts > lastBlasts) {
       const applied=(value.impulsesQueued||0)-lastImpulses;
       const skipped=(value.foreignSkipped||0)-lastForeign;
       $('blast-feedback').textContent=applied>0
         ? 'Last blast: sent to '+applied+' car(s) simulated by your client.'
-        : skipped>0 ? 'Blast blocked: nearby cars are not simulated by your client. Use a passenger fleet with host physics.'
+        : skipped>0 ? 'Car impulses blocked: nearby cars are not simulated by your client. Use a passenger fleet with host physics.'
         : 'Last blast: no eligible cars in range. The cars may be frozen or outside the radius.';
       $('blast-feedback').classList.toggle('error',applied===0);
     }
@@ -93,6 +93,13 @@
     }
   });
   Open77.on('weapons:result',value=>{$('result').textContent=value.message;$('result').classList.toggle('error',!value.ok);});
+  Open77.on('weapons:characters',value=>{
+    const nearest=Array.isArray(value.closest)&&value.closest[0];
+    $('result').textContent='Characters: '+value.accepted+' launch request(s) authorized, '+value.rejected+' refused.'
+      +(nearest?' Nearest #'+nearest.player+': '+nearest.reason+'; life '+nearest.life+', previous motion '+nearest.previous+'.':'')
+      +' Verify their movement in game.';
+    $('result').classList.remove('error');
+  });
   $('search').oninput=()=>{const q=$('search').value.toLocaleLowerCase();for(const b of $('weapons').children)b.hidden=!b.textContent.toLocaleLowerCase().includes(q);};
   $('apply').onclick=()=>send('apply',{record:selected,tuning});
   $('equip').onclick=()=>send('equip',{record:selected});
