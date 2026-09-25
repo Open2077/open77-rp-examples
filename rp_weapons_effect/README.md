@@ -6,6 +6,8 @@ An opt-in administrator weapon workshop with an English WebUI and the bundled Fr
 
 **Experimental:** gameplay validation of the six advanced stat controls and restoration after holstering is still in progress. Verify actual weapon behavior and cleanup state; native stat readback alone is not a gameplay result.
 
+**Known issue under investigation:** clearing tuning while a weapon is holstered, then replacing it, can leave its old modifiers applied when it is equipped again. Use **Restore stock while the weapon is drawn, before switching weapons**. An `idle` status or zero modifier count does not rule out this issue.
+
 ## Install and open
 
 1. Copy `rp_weapons_effect` into your server's resources directory.
@@ -37,11 +39,11 @@ if not ok then print(reason) end
 local state = Open77.weapons.tuning()
 if state then print(state.status, state.active) end
 
--- Later, restore only this resource's modifiers.
+-- Restore while this weapon is drawn, before switching weapons.
 Open77.weapons.clearTuning()
 ```
 
-Each `setTuning` call replaces the full profile; omitted fields reset to defaults. It does not equip the weapon or rewrite its shared TweakDB record. One resource owns tuning at a time. Stop/reset releases that profile, but a holstered weapon can require deferred cleanup: inspect `pendingModifiers` and draw the old weapon to allow restoration. `restoring` and `waiting_for_restore` are explicit states.
+Each `setTuning` call replaces the full profile; omitted fields reset to defaults. It does not equip the weapon or rewrite its shared TweakDB record. One resource owns tuning at a time. Stop/reset releases that profile, but a holstered weapon can require deferred cleanup. `restoring`, `waiting_for_restore` and `pendingModifiers` report that queue; they cannot detect the known cached-modifier issue after replacing a holstered weapon. Restore stock while the tuned weapon is drawn before switching.
 
 ## Commands
 
