@@ -28,7 +28,31 @@ the server would trust, and never decide damage or death.
 | Melee, Slam and hack predictions | The bundled `open77_cyberware` system resource | **No extra resource**, but your **gamemode must publish its combat policy** (see [`prediction_policy_example`](../prediction_policy_example)). Without it these three stay off (fail closed), because the client must never predict a hit your server will refuse |
 | **Operator switches, ping ceiling, telemetry, admin command, gamemode restrictions** | **This resource, `open77_prediction`** | This is the only thing it adds |
 
-So `open77_prediction` is **not** what makes prediction work. It is the control panel on top:
+## Do I need it? No. It is optional.
+
+**Prediction works without this resource.** Here is why:
+
+1. **The predictions themselves are in the game client, not in a resource.** Deciding to
+   show a hit early, playing it, then adopting or rolling it back is native Open77 client
+   code. It runs whether or not any resource is loaded.
+2. **The client ships safe defaults.** With no `open77_prediction`, every prediction family
+   is on, and a client stops starting new predictions above 250 ms of round trip, where
+   they would be wrong too often. That is the right setting for almost every server.
+3. **The server still decides everything.** A prediction is only a local preview. Hits,
+   damage, pushes and deaths are always decided by the server, so no resource is needed for
+   the game to stay correct and fair.
+
+**What you lose without it:** only control and visibility. You cannot switch a family off,
+change the ping ceiling, let a gamemode restrict predictions, or read the telemetry.
+
+**When to keep it:** if you want to turn a prediction off (for example `blast` in a
+gamemode where it feels wrong), tune the ping ceiling for your players, or watch how often
+predictions get refuted. It is loaded by default. It only goes missing when your server uses
+a `resources.load` allowlist that does not list it.
+
+## What it adds: the control panel
+
+`open77_prediction` is **not** what makes prediction work. It is the control panel on top:
 
 - **Seven switches** (`melee`, `slam`, `hack`, `door`, `blast`, `carContact`, `playerContact`)
   and a **round-trip ceiling** above which a client starts no new prediction. They are server
@@ -45,10 +69,7 @@ So `open77_prediction` is **not** what makes prediction work. It is the control 
 - **Admin command** (ACL `command.prediction`):
   `prediction [status] | on <family> | off <family> | ping <ms> | telemetry <seconds>`.
 
-**Without this resource** (for example, a `resources.load` allowlist that does not list it),
-clients keep their compiled defaults and prediction still works. You only lose the
-switches, the admin command and the telemetry. If your server uses a `resources.load` list,
-add `open77_prediction` to keep them.
+If your server uses a `resources.load` list, add `open77_prediction` to keep these controls.
 
 ## Files
 
