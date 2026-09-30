@@ -34,6 +34,7 @@ visuals, holding versus drinking, permissions and current first-person limits.
 | Crime | `rp_crime` (lockpick, shop robbery, dealer, fence), `rp_gangs` (territories, street market) |
 | Spectacle | `rp_fireworks` (synchronized shows), `rp_drones` (a drone light show: real drone bodies held in the sky, an OPEN//77 sign, cut and flip-book choreography) |
 | Lab helpers | `rp_selftest` (33 checks, console `selftest`), `rp_taxitest` (`groundz`), `rp_worldprobe` (`wprobe`, `vwarp`), `eval_taxi` (the first taxi), [`rp_weapons_effect`](rp_weapons_effect) (English weapon workshop, `/weaponeffects`) |
+| Platform (reference) | [`platform/open77_prediction`](platform/open77_prediction): read-only copy of the bundled prediction operator layer (switches, ping ceiling, telemetry); already on every server, do not install. [`platform/prediction_policy_example`](platform/prediction_policy_example): the ~40 lines a gamemode needs to turn on melee, Slam and hack prediction |
 
 **`rp_fireworks` is the short one to read first.** Two hundred lines of server
 Lua, no client code, and it is the example for "everybody sees the same thing at
